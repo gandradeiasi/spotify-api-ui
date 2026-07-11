@@ -280,29 +280,51 @@ if (localStorage.getItem('hidden_genres')) {
     }
 }
 
-// Inicializa aplicativo verificando o token na URL ou cache do localStorage
-function checkAuth() {
-    const hash = window.location.hash;
-    let token = null;
+// Auxiliares criptográficos para a autenticação PKCE requerida pelo Spotify a partir de Nov 2025
+const generateRandomString = (length) => {
+    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const values = window.crypto.getRandomValues(new Uint8Array(length));
+    return values.reduce((acc, x) => acc + possible[x % possible.length], "");
+};
 
-    if (hash) {
-        // Extrai token do hash da URL
-        const matches = hash.match(/access_token=([^&]*)/);
-        if (matches) {
-            token = matches[1];
-            // Limpa a URL hash para manter a barra de navegação limpa
-            window.history.replaceState("", document.title, window.location.pathname + window.location.search);
+const sha256 = async (plain) => {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(plain);
+    return window.crypto.subtle.digest('SHA-256', data);
+};
+
+const base64encode = (input) => {
+    return btoa(String.fromCharCode(...new Uint8Array(input)))
+        .replace(/=/g, '')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_');
+};
+
+// Inicializa aplicativo verificando o token ou capturando o Authorization Code na URL para trocar pelo token
+async function checkAuth() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    let token = localStorage.getItem('spotify_token');
+
+    // Se houver um código temporário de autenticação na URL (retorno do login do Spotify)
+    if (code) {
+        updateProgress("Trocando código...", "Expondo credenciais para resgate do token de acesso...", 5);
+        showLoadingMode();
+        
+        const success = await exchangeCodeForToken(code);
+        if (success) {
+            // Limpa parâmetros de pesquisa na URL sem recarregar a página
+            window.history.replaceState("", document.title, window.location.pathname);
+            showDashboardMode();
+            loadSpotifyData();
+        } else {
+            showLoginMode();
         }
-    }
-
-    if (!token) {
-        // Verifica se há token salvo em cache
-        token = localStorage.getItem('spotify_token');
+        return;
     }
 
     if (token) {
         state.accessToken = token;
-        localStorage.setItem('spotify_token', token);
         showDashboardMode();
         loadSpotifyData();
     } else {
@@ -310,20 +332,82 @@ function checkAuth() {
     }
 }
 
-// Direciona usuário para o fluxo de autenticação do Spotify (Implicit Grant Flow)
-function loginWithSpotify() {
+// Faz o POST para o endpoint de token para conseguir o accessToken do usuário
+async function exchangeCodeForToken(code) {
+    const codeVerifier = localStorage.getItem('code_verifier');
+    const url = "https://accounts.spotify.com/api/token";
+    
+    const payload = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+            client_id: CLIENT_ID,
+            grant_type: 'authorization_code',
+            code: code,
+            redirect_uri: REDIRECT_URI,
+            code_verifier: codeVerifier,
+        }),
+    };
+
+    try {
+        const response = await fetch(url, payload);
+        const data = await response.json();
+        
+        if (data.access_token) {
+            state.accessToken = data.access_token;
+            localStorage.setItem('spotify_token', data.access_token);
+            if (data.refresh_token) {
+                localStorage.setItem('spotify_refresh_token', data.refresh_token);
+            }
+            return true;
+        } else {
+            console.error("Erro ao obter token:", data);
+            showToast("Falha ao autenticar com o Spotify. Tente novamente.", "error");
+            return false;
+        }
+    } catch (err) {
+        console.error("Erro de conexão na troca de código:", err);
+        showToast("Problema de conexão ao obter o token.", "error");
+        return false;
+    }
+}
+
+// Direciona usuário para o fluxo de autenticação do Spotify com PKCE (Authorization Code com S256 Challenge)
+async function loginWithSpotify() {
+    const codeVerifier = generateRandomString(64);
+    const hashed = await sha256(codeVerifier);
+    const codeChallenge = base64encode(hashed);
+
+    // Salva o codeVerifier na sessão local para a troca na volta do redirect
+    window.localStorage.setItem('code_verifier', codeVerifier);
+
     // Escopos obrigatórios:
     // - user-library-read para ler as músicas salvas
     // - user-follow-read para ler os artistas que segue
     // - user-follow-modify para seguir artistas via botão "Seguir todos"
     const scopes = 'user-library-read user-follow-read user-follow-modify';
-    const authUrl = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(scopes)}`;
-    window.location.href = authUrl;
+    
+    const authUrl = new URL("https://accounts.spotify.com/authorize");
+    const params = {
+        response_type: 'code',
+        client_id: CLIENT_ID,
+        scope: scopes,
+        code_challenge_method: 'S256',
+        code_challenge: codeChallenge,
+        redirect_uri: REDIRECT_URI,
+    };
+
+    authUrl.search = new URLSearchParams(params).toString();
+    window.location.href = authUrl.toString();
 }
 
 // Desloga o usuário limpando cache e estados locais
 function logout() {
     localStorage.removeItem('spotify_token');
+    localStorage.removeItem('spotify_refresh_token');
+    localStorage.removeItem('code_verifier');
     state.accessToken = null;
     state.savedTracks = [];
     state.followedArtists = [];
@@ -969,7 +1053,6 @@ modalConfig.addEventListener('click', (e) => {
         modalConfig.classList.add('hidden');
     }
 });
-
 
 document.getElementById('btn-login-spotify').addEventListener('click', loginWithSpotify);
 document.getElementById('btn-logout').addEventListener('click', logout);
