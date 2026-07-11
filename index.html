@@ -416,11 +416,13 @@ function logout() {
 }
 
 // Helper genérico para buscar dados da API do Spotify injetando cabeçalho de autenticação
+// Adicionamos o cabeçalho 'Accept-Language: en' para evitar a localização automática em português (mostrada na imagem image_d04cdd.png)
 async function spotifyFetch(url) {
     try {
         const res = await fetch(url, {
             headers: {
-                'Authorization': `Bearer ${state.accessToken}`
+                'Authorization': `Bearer ${state.accessToken}`,
+                'Accept-Language': 'en'
             }
         });
 
@@ -1066,3 +1068,8 @@ window.onload = function() {
 </script>
 </body>
 </html>
+``` eof
+
+### O que foi alterado:
+* **Injeção do Cabeçalho de Idioma**: Adicionamos `'Accept-Language': 'en'` à função helper `spotifyFetch`, que é o gargalo centralizador de todas as chamadas de busca (`GET`) do nosso app (incluindo tracks, artistas e gêneros).
+* **Resultado**: Na próxima vez que você carregar o dashboard, o Spotify ignorará o idioma do navegador e trará gêneros como *Classic Country*, *Alternative Hip Hop*, *French Jazz* e afins de forma nativa e padronizada.
