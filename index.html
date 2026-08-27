@@ -60,13 +60,13 @@
         </div>
     </header>
 
-    <!-- Modal de Configuração Oauth (Seguro e transparente) -->
+    <!-- Modal de Configuração Oauth -->
     <div id="modal-config" class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 hidden backdrop-blur-sm">
         <div class="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <h3 class="text-xl font-bold text-white flex items-center space-x-2">
                 <span>Configurações da API Spotify</span>
             </h3>
-            <p class="text-xs text-zinc-400">Insira as credenciais do seu aplicativo Spotify. Por padrão, já preenchemos com os seus dados.</p>
+            <p class="text-xs text-zinc-400">Insira as credenciais do seu aplicativo Spotify.</p>
             <div class="space-y-3">
                 <div>
                     <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1">Client ID</label>
@@ -108,13 +108,12 @@
                 <span>CONECTAR COM O SPOTIFY</span>
             </button>
 
-            <!-- Alerta para configuração de URI se necessário -->
             <div class="text-xs text-zinc-500 bg-zinc-900 border border-zinc-800 p-4 rounded-xl max-w-md">
-                <span class="font-semibold text-zinc-300">Nota sobre Redirect URI:</span> Se você estiver executando esta página fora de <span class="underline">https://gandradeiasi.github.io/spotify-api-ui/</span>, clique na engrenagem no topo para mudar a URI de retorno para que o Spotify autorize o login.
+                <span class="font-semibold text-zinc-300">Nota sobre Redirect URI:</span> Se você estiver executando esta página fora de <span class="underline">https://gandradeiasi.github.io/spotify-api-ui/</span>, clique na engrenagem no topo para mudar a URI de retorno.
             </div>
         </div>
 
-        <!-- Estado Carregando / Processando Dados de Biblioteca -->
+        <!-- Estado Carregando -->
         <div id="section-loading" class="hidden flex flex-col items-center justify-center py-16 space-y-6">
             <div class="relative flex items-center justify-center">
                 <div class="animate-spin rounded-full h-24 w-24 border-t-2 border-b-2 border-[#1DB954]"></div>
@@ -122,14 +121,14 @@
             </div>
             <div class="text-center space-y-2 max-w-md">
                 <h3 id="loading-status" class="text-lg font-semibold text-white">Iniciando Varredura...</h3>
-                <p id="loading-detail" class="text-sm text-zinc-400">Conectando ao banco de dados do Spotify e preparando a paginação ilimitada...</p>
+                <p id="loading-detail" class="text-sm text-zinc-400">Conectando ao banco de dados do Spotify...</p>
                 <div class="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden mt-4">
                     <div id="loading-progress-bar" class="bg-[#1DB954] h-full w-0 transition-all duration-300"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Estado Conectado (Dashboard Principal) -->
+        <!-- Dashboard Principal -->
         <div id="section-dashboard" class="hidden space-y-6">
             
             <!-- Tabs Navigation -->
@@ -164,7 +163,7 @@
 
             <!-- CONTEÚDO DA ABA 1 -->
             <div id="tab-content-1" class="tab-content grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <!-- Coluna 1: Artistas de Tracks Salvas que NÃO sigo -->
+                <!-- Coluna 1: Não Seguidos -->
                 <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 flex flex-col h-[650px]">
                     <div class="flex items-center justify-between pb-4 border-b border-zinc-800 mb-4">
                         <div>
@@ -176,21 +175,17 @@
                         </button>
                     </div>
                     
-                    <div id="list-not-followed" class="flex-grow overflow-y-auto space-y-3 pr-2">
-                        <!-- Renderizado dinamicamente -->
-                    </div>
+                    <div id="list-not-followed" class="flex-grow overflow-y-auto space-y-3 pr-2"></div>
                 </div>
 
-                <!-- Coluna 2: Artistas seguidos mas sem NENHUMA track salva -->
+                <!-- Coluna 2: Seguidos sem Tracks -->
                 <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 flex flex-col h-[650px]">
                     <div class="pb-4 border-b border-zinc-800 mb-4">
                         <h2 class="text-lg font-bold text-white">Seguidos Sem Músicas Salvas</h2>
                         <p class="text-xs text-zinc-400">Artistas que você segue mas que não têm nenhuma música na sua biblioteca de faixas curtidas.</p>
                     </div>
                     
-                    <div id="list-followed-no-tracks" class="flex-grow overflow-y-auto space-y-3 pr-2">
-                        <!-- Renderizado dinamicamente -->
-                    </div>
+                    <div id="list-followed-no-tracks" class="flex-grow overflow-y-auto space-y-3 pr-2"></div>
                 </div>
             </div>
 
@@ -200,16 +195,14 @@
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-zinc-800 mb-6 gap-4">
                         <div>
                             <h2 class="text-xl font-extrabold text-white">Frequência de Gêneros</h2>
-                            <p class="text-sm text-zinc-400">Análise de gêneros ordenados do menor para o maior (menos comum ao mais comum).</p>
+                            <p class="text-sm text-zinc-400">Análise de gêneros ordenados do menor para o maior. Gêneros com a mesma pontuação recebem destaque visual.</p>
                         </div>
                         <button id="btn-reset-hidden" class="bg-zinc-800 hover:bg-zinc-700 text-white font-semibold text-xs px-5 py-2.5 rounded-full border border-zinc-700 transition">
                             RESETAR TODAS OCULTAÇÕES
                         </button>
                     </div>
 
-                    <div id="grid-genres" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <!-- Renderizado dinamicamente -->
-                    </div>
+                    <div id="grid-genres" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
                 </div>
             </div>
 
@@ -218,12 +211,10 @@
                 <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
                     <div class="pb-4 border-b border-zinc-800 mb-6">
                         <h2 class="text-xl font-extrabold text-white">Gêneros Ocultados</h2>
-                        <p class="text-sm text-zinc-400">Gêneros que você removeu temporariamente da listagem de frequência principal.</p>
+                        <p class="text-sm text-zinc-400">Gêneros que você removeu temporariamente da listagem principal.</p>
                     </div>
 
-                    <div id="list-hidden-genres" class="space-y-3 max-w-xl">
-                        <!-- Renderizado dinamicamente -->
-                    </div>
+                    <div id="list-hidden-genres" class="space-y-3 max-w-xl"></div>
                 </div>
             </div>
 
@@ -241,11 +232,9 @@
 </div>
 
 <script>
-// Constantes Padrão fornecidas pelo Usuário
 let CLIENT_ID = '982368a9f414404798fef187660515e7';
 let REDIRECT_URI = 'https://gandradeiasi.github.io/spotify-api-ui/';
 
-// Carrega configurações personalizadas salvas localmente para testes em localhost
 if (localStorage.getItem('custom_client_id')) {
     CLIENT_ID = localStorage.getItem('custom_client_id');
 }
@@ -253,24 +242,22 @@ if (localStorage.getItem('custom_redirect_uri')) {
     REDIRECT_URI = localStorage.getItem('custom_redirect_uri');
 }
 
-// Atualiza inputs visuais no modal de configuração
 document.getElementById('config-client-id').value = CLIENT_ID;
 document.getElementById('config-redirect-uri').value = REDIRECT_URI;
 
-// Estado Global da Aplicação
 const state = {
     accessToken: null,
+    tokenExpiresAt: 0,
     userProfile: null,
-    savedTracks: [],        // Todas as tracks salvas (paginação ilimitada)
-    followedArtists: [],    // Todos os artistas seguidos (paginação ilimitada)
-    artistsMap: {},         // Mapa completo de ID de Artista -> Detalhes (com gêneros, imagens, etc.)
-    notFollowedList: [],    // Lista de artistas de tracks salvas que o usuário NÃO segue
-    followedNoTracksList: [], // Lista de artistas que o usuário segue mas que não têm músicas curtidas
-    genreFrequencies: [],   // Lista de { genre: string, count: number } ordenados
-    hiddenGenres: new Set() // Set de gêneros ocultados
+    savedTracks: [],
+    followedArtists: [],
+    artistsMap: {},
+    notFollowedList: [],
+    followedNoTracksList: [],
+    genreFrequencies: [],
+    hiddenGenres: new Set()
 };
 
-// Gerenciamento de persistência de gêneros ocultados no localStorage
 if (localStorage.getItem('hidden_genres')) {
     try {
         const parsed = JSON.parse(localStorage.getItem('hidden_genres'));
@@ -280,7 +267,7 @@ if (localStorage.getItem('hidden_genres')) {
     }
 }
 
-// Auxiliares criptográficos para a autenticação PKCE requerida pelo Spotify a partir de Nov 2025
+// Auxiliares PKCE
 const generateRandomString = (length) => {
     const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     const values = window.crypto.getRandomValues(new Uint8Array(length));
@@ -300,20 +287,60 @@ const base64encode = (input) => {
         .replace(/\//g, '_');
 };
 
-// Inicializa aplicativo verificando o token ou capturando o Authorization Code na URL para trocar pelo token
+// Renovação automática e persistente de token usando Refresh Token
+async function refreshAccessToken() {
+    const refreshToken = localStorage.getItem('spotify_refresh_token');
+    if (!refreshToken) return false;
+
+    const url = "https://accounts.spotify.com/api/token";
+    const payload = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+            client_id: CLIENT_ID,
+            grant_type: 'refresh_token',
+            refresh_token: refreshToken
+        }),
+    };
+
+    try {
+        const response = await fetch(url, payload);
+        const data = await response.json();
+        
+        if (data.access_token) {
+            state.accessToken = data.access_token;
+            state.tokenExpiresAt = Date.now() + ((data.expires_in || 3600) * 1000);
+            localStorage.setItem('spotify_token', data.access_token);
+            localStorage.setItem('spotify_token_expires_at', state.tokenExpiresAt.toString());
+            if (data.refresh_token) {
+                localStorage.setItem('spotify_refresh_token', data.refresh_token);
+            }
+            return true;
+        } else {
+            console.error("Erro ao renovar token:", data);
+            return false;
+        }
+    } catch (err) {
+        console.error("Erro na requisição de refresh token:", err);
+        return false;
+    }
+}
+
 async function checkAuth() {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     let token = localStorage.getItem('spotify_token');
+    let expiresAt = parseInt(localStorage.getItem('spotify_token_expires_at') || '0', 10);
+    let refreshToken = localStorage.getItem('spotify_refresh_token');
 
-    // Se houver um código temporário de autenticação na URL (retorno do login do Spotify)
     if (code) {
-        updateProgress("Trocando código...", "Expondo credenciais para resgate do token de acesso...", 5);
+        updateProgress("Trocando código...", "Autenticando sessão com o Spotify...", 5);
         showLoadingMode();
         
         const success = await exchangeCodeForToken(code);
         if (success) {
-            // Limpa parâmetros de pesquisa na URL sem recarregar a página
             window.history.replaceState("", document.title, window.location.pathname);
             showDashboardMode();
             loadSpotifyData();
@@ -323,8 +350,21 @@ async function checkAuth() {
         return;
     }
 
-    if (token) {
+    // Se o token estiver expirado ou quase expirando (< 60s), renova via refresh token
+    if (refreshToken && (!token || Date.now() >= (expiresAt - 60000))) {
+        updateProgress("Restaurando sessão...", "Renovando credenciais...", 5);
+        showLoadingMode();
+        const refreshed = await refreshAccessToken();
+        if (refreshed) {
+            showDashboardMode();
+            loadSpotifyData();
+            return;
+        }
+    }
+
+    if (token && Date.now() < expiresAt) {
         state.accessToken = token;
+        state.tokenExpiresAt = expiresAt;
         showDashboardMode();
         loadSpotifyData();
     } else {
@@ -332,7 +372,6 @@ async function checkAuth() {
     }
 }
 
-// Faz o POST para o endpoint de token para conseguir o accessToken do usuário
 async function exchangeCodeForToken(code) {
     const codeVerifier = localStorage.getItem('code_verifier');
     const url = "https://accounts.spotify.com/api/token";
@@ -357,14 +396,16 @@ async function exchangeCodeForToken(code) {
         
         if (data.access_token) {
             state.accessToken = data.access_token;
+            state.tokenExpiresAt = Date.now() + ((data.expires_in || 3600) * 1000);
             localStorage.setItem('spotify_token', data.access_token);
+            localStorage.setItem('spotify_token_expires_at', state.tokenExpiresAt.toString());
             if (data.refresh_token) {
                 localStorage.setItem('spotify_refresh_token', data.refresh_token);
             }
             return true;
         } else {
             console.error("Erro ao obter token:", data);
-            showToast("Falha ao autenticar com o Spotify. Tente novamente.", "error");
+            showToast("Falha ao autenticar com o Spotify.", "error");
             return false;
         }
     } catch (err) {
@@ -374,21 +415,14 @@ async function exchangeCodeForToken(code) {
     }
 }
 
-// Direciona usuário para o fluxo de autenticação do Spotify com PKCE (Authorization Code com S256 Challenge)
 async function loginWithSpotify() {
     const codeVerifier = generateRandomString(64);
     const hashed = await sha256(codeVerifier);
     const codeChallenge = base64encode(hashed);
 
-    // Salva o codeVerifier na sessão local para a troca na volta do redirect
     window.localStorage.setItem('code_verifier', codeVerifier);
 
-    // Escopos obrigatórios:
-    // - user-library-read para ler as músicas salvas
-    // - user-follow-read para ler os artistas que segue
-    // - user-follow-modify para seguir artistas via botão "Seguir todos"
     const scopes = 'user-library-read user-follow-read user-follow-modify';
-    
     const authUrl = new URL("https://accounts.spotify.com/authorize");
     const params = {
         response_type: 'code',
@@ -403,60 +437,70 @@ async function loginWithSpotify() {
     window.location.href = authUrl.toString();
 }
 
-// Desloga o usuário limpando cache e estados locais
 function logout() {
     localStorage.removeItem('spotify_token');
+    localStorage.removeItem('spotify_token_expires_at');
     localStorage.removeItem('spotify_refresh_token');
     localStorage.removeItem('code_verifier');
     state.accessToken = null;
+    state.tokenExpiresAt = 0;
     state.savedTracks = [];
     state.followedArtists = [];
     state.artistsMap = {};
     showLoginMode();
 }
 
-// Helper genérico para buscar dados da API do Spotify injetando cabeçalho de autenticação
-// Adicionamos o cabeçalho 'Accept-Language: en' para evitar a localização automática em português (mostrada na imagem image_d04cdd.png)
 async function spotifyFetch(url) {
     try {
-        const res = await fetch(url, {
+        // Verifica se precisa de refresh antes de chamar
+        if (localStorage.getItem('spotify_refresh_token') && Date.now() >= (state.tokenExpiresAt - 60000)) {
+            await refreshAccessToken();
+        }
+
+        let res = await fetch(url, {
             headers: {
                 'Authorization': `Bearer ${state.accessToken}`,
                 'Accept-Language': 'en'
             }
         });
 
-        if (res.status === 401) {
-            // Token expirado ou inválido
-            showToast("Sua sessão do Spotify expirou. Realize o login novamente.", "error");
-            logout();
-            return null;
+        // Caso dê 401, tenta renovar o token e tentar de novo uma vez
+        if (res.status === 401 && localStorage.getItem('spotify_refresh_token')) {
+            const refreshed = await refreshAccessToken();
+            if (refreshed) {
+                res = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${state.accessToken}`,
+                        'Accept-Language': 'en'
+                    }
+                });
+            } else {
+                showToast("Sua sessão do Spotify expirou.", "error");
+                logout();
+                return null;
+            }
         }
 
         if (res.status === 429) {
-            // Rate Limit atingido
-            showToast("Atingido limite de requisições do Spotify. Aguardando alguns segundos...", "warning");
+            showToast("Atingido limite de requisições. Aguardando...", "warning");
             const retryAfter = res.headers.get('Retry-After') || 5;
             await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
-            return spotifyFetch(url); // Tenta novamente
+            return spotifyFetch(url);
         }
 
         if (!res.ok) {
-            throw new Error(`Erro na API do Spotify: Cod ${res.status}`);
+            throw new Error(`Erro API: ${res.status}`);
         }
 
-        // Caso a resposta seja um PUT/DELETE bem-sucedido sem conteúdo
         if (res.status === 204) return true;
 
         return await res.json();
     } catch(err) {
         console.error("Erro na chamada:", err);
-        showToast("Houve um problema de conexão com a API do Spotify.", "error");
         return null;
     }
 }
 
-// Atualizadores visuais de carregamento
 function updateProgress(statusText, detailText, percent) {
     document.getElementById('loading-status').innerText = statusText;
     document.getElementById('loading-detail').innerText = detailText;
@@ -466,34 +510,23 @@ function updateProgress(statusText, detailText, percent) {
     }
 }
 
-// Busca recursiva/paginada de todas as músicas salvas do usuário (Ilimitada)
 async function fetchAllSavedTracks() {
     let tracks = [];
     let url = 'https://api.spotify.com/v1/me/tracks?limit=50';
     let hasNext = true;
-    let pageCount = 0;
 
-    updateProgress("Vasculhando músicas salvas...", "Buscando primeira página de faixas...", 10);
+    updateProgress("Vasculhando músicas salvas...", "Buscando faixas...", 10);
 
     while (url && hasNext) {
         const data = await spotifyFetch(url);
-        if (!data || !data.items) {
-            break;
-        }
+        if (!data || !data.items) break;
 
         tracks = tracks.concat(data.items);
-        pageCount++;
-        
         const currentCount = tracks.length;
         const total = data.total;
-        const pct = Math.min(10 + Math.floor((currentCount / total) * 35), 45); // Vai de 10% a 45%
+        const pct = Math.min(10 + Math.floor((currentCount / Math.max(1, total)) * 35), 45);
 
-        updateProgress(
-            "Analisando biblioteca de músicas...", 
-            `Baixadas ${currentCount} de ${total} faixas salvas...`,
-            pct
-        );
-
+        updateProgress("Analisando biblioteca...", `Baixadas ${currentCount} de ${total} faixas...`, pct);
         url = data.next;
         if (!url) hasNext = false;
     }
@@ -501,31 +534,22 @@ async function fetchAllSavedTracks() {
     return tracks;
 }
 
-// Busca recursiva de todos os artistas seguidos (Ilimitada)
 async function fetchAllFollowedArtists() {
     let artists = [];
-    // API de follow usa cursor para paginação
     let url = 'https://api.spotify.com/v1/me/following?type=artist&limit=50';
     let hasNext = true;
 
-    updateProgress("Buscando artistas seguidos...", "Lendo seus artistas favoritos...", 50);
+    updateProgress("Buscando artistas seguidos...", "Lendo favoritos...", 50);
 
     while (url && hasNext) {
         const data = await spotifyFetch(url);
-        if (!data || !data.artists) {
-            break;
-        }
+        if (!data || !data.artists) break;
 
         artists = artists.concat(data.artists.items);
         const currentCount = artists.length;
-        const pct = Math.min(50 + Math.floor((currentCount / Math.max(100, currentCount + 50)) * 20), 70); // Vai de 50% a 70%
+        const pct = Math.min(50 + Math.floor((currentCount / Math.max(100, currentCount + 50)) * 20), 70);
 
-        updateProgress(
-            "Analisando artistas que você segue...",
-            `Mapeados ${currentCount} artistas seguidos...`,
-            pct
-        );
-
+        updateProgress("Mapeando artistas seguidos...", `${currentCount} artistas encontrados...`, pct);
         const nextCursor = data.artists.cursors ? data.artists.cursors.after : null;
         url = nextCursor ? `https://api.spotify.com/v1/me/following?type=artist&limit=50&after=${nextCursor}` : null;
         if (!url) hasNext = false;
@@ -534,13 +558,12 @@ async function fetchAllFollowedArtists() {
     return artists;
 }
 
-// Busca detalhes estendidos dos artistas para adquirir seus gêneros musicais (batches de 50 IDs)
 async function fetchArtistsDetails(artistIds) {
     const artistDetails = {};
     const idsArray = Array.from(artistIds);
     const batchSize = 50;
 
-    updateProgress("Carregando gêneros...", "Catalogando metadados dos artistas...", 75);
+    updateProgress("Carregando gêneros...", "Catalogando metadados...", 75);
 
     for (let i = 0; i < idsArray.length; i += batchSize) {
         const chunk = idsArray.slice(i, i + batchSize);
@@ -549,19 +572,13 @@ async function fetchArtistsDetails(artistIds) {
 
         if (data && data.artists) {
             data.artists.forEach(artist => {
-                if (artist) {
-                    artistDetails[artist.id] = artist;
-                }
+                if (artist) artistDetails[artist.id] = artist;
             });
         }
 
         const completed = Math.min(i + batchSize, idsArray.length);
-        const pct = 75 + Math.floor((completed / idsArray.length) * 20); // De 75% a 95%
-        updateProgress(
-            "Gerando mapa de gêneros...",
-            `Mapeados gêneros de ${completed} de ${idsArray.length} artistas...`,
-            pct
-        );
+        const pct = 75 + Math.floor((completed / Math.max(1, idsArray.length)) * 20);
+        updateProgress("Gerando mapa de gêneros...", `${completed} de ${idsArray.length} artistas processados...`, pct);
     }
 
     return artistDetails;
@@ -570,7 +587,6 @@ async function fetchArtistsDetails(artistIds) {
 async function loadSpotifyData() {
     showLoadingMode();
 
-    // 1. Perfil do Usuário
     const profile = await spotifyFetch('https://api.spotify.com/v1/me');
     if (profile) {
         state.userProfile = profile;
@@ -581,7 +597,6 @@ async function loadSpotifyData() {
         }
     }
 
-    // 2. Coleta músicas e artistas seguidos em paralelo
     const [tracks, followed] = await Promise.all([
         fetchAllSavedTracks(),
         fetchAllFollowedArtists()
@@ -590,7 +605,6 @@ async function loadSpotifyData() {
     state.savedTracks = tracks;
     state.followedArtists = followed;
 
-    // 3. Extrair todos os IDs únicos de artistas das tracks salvas para buscar detalhes (gêneros e imagens)
     const uniqueArtistIds = new Set();
     tracks.forEach(item => {
         if (item.track && item.track.artists) {
@@ -600,33 +614,24 @@ async function loadSpotifyData() {
         }
     });
 
-    // 4. Buscar detalhes dos artistas em batches
     state.artistsMap = await fetchArtistsDetails(uniqueArtistIds);
 
-    updateProgress("Prontinho!", "Montando sua interface otimizada...", 100);
-
-    // 5. Executa análise dos dados salvando no estado
+    updateProgress("Pronto!", "Montando interface...", 100);
     processData();
-
-    // 6. Atualiza a tela
     renderAll();
     showDashboardMode();
 }
 
 function processData() {
-    // Limpa listas anteriores
     state.notFollowedList = [];
     state.followedNoTracksList = [];
 
-    // --- ABA 1: ARTISTAS COMPARADOS ---
-    // Cria conjunto de IDs de artistas que o usuário segue
     const followedIds = new Set(state.followedArtists.map(a => a.id));
 
-    // A) Mapeia artistas principais das faixas salvas que não são seguidos
+    // A) Artistas principais salvos não seguidos
     const uniquePrimarySavedArtists = new Map();
     state.savedTracks.forEach(item => {
         if (item.track && item.track.artists && item.track.artists.length > 0) {
-            // Considera APENAS o artista principal/primeiro conforme instrução
             const primaryArtist = item.track.artists[0];
             if (!uniquePrimarySavedArtists.has(primaryArtist.id)) {
                 uniquePrimarySavedArtists.set(primaryArtist.id, primaryArtist);
@@ -636,7 +641,6 @@ function processData() {
 
     uniquePrimarySavedArtists.forEach((artist, id) => {
         if (!followedIds.has(id)) {
-            // Busca dados completos (como foto) no mapa detalhado que já baixamos
             const details = state.artistsMap[id] || {};
             state.notFollowedList.push({
                 id: id,
@@ -648,11 +652,9 @@ function processData() {
         }
     });
 
-    // Ordenar em ordem alfabética para facilitar navegação do usuário
     state.notFollowedList.sort((a,b) => a.name.localeCompare(b.name));
 
-    // B) Artistas que sigo mas não têm faixa salva na biblioteca
-    // Cria conjunto de todos os artistas envolvidos em faixas salvas (não apenas o principal) para ser mais rigoroso e seguro
+    // B) Seguidos sem faixas salvas
     const allArtistsInTracks = new Set();
     state.savedTracks.forEach(item => {
         if (item.track && item.track.artists) {
@@ -675,13 +677,10 @@ function processData() {
 
     state.followedNoTracksList.sort((a,b) => a.name.localeCompare(b.name));
 
-
-    // --- ABA 2: GÊNEROS DAS TRACKS SALVAS ---
-    // Considerar todos os artistas de todas as faixas salvas
+    // C) Gêneros das músicas salvas
     const genreCounts = {};
     state.savedTracks.forEach(item => {
         if (item.track && item.track.artists) {
-            // Coleciona gêneros de cada artista envolvido nesta faixa
             item.track.artists.forEach(simplifiedArtist => {
                 const fullArtist = state.artistsMap[simplifiedArtist.id];
                 if (fullArtist && fullArtist.genres) {
@@ -693,8 +692,6 @@ function processData() {
         }
     });
 
-    // Transforma em array e ordena do MENOR para o MAIOR (frequência ascendente)
-    // Exemplo: se tem 4 de rock e 2 de samba, o de 2 (samba) vem primeiro.
     const sortedGenres = Object.keys(genreCounts).map(genre => ({
         name: genre,
         count: genreCounts[genre]
@@ -702,7 +699,7 @@ function processData() {
 
     sortedGenres.sort((a, b) => {
         if (a.count === b.count) {
-            return a.name.localeCompare(b.name); // Desempate alfabético
+            return a.name.localeCompare(b.name);
         }
         return a.count - b.count;
     });
@@ -710,7 +707,6 @@ function processData() {
     state.genreFrequencies = sortedGenres;
 }
 
-// Seguir todos os artistas listados na primeira caixa
 async function followAllNotFollowed() {
     if (state.notFollowedList.length === 0) {
         showToast("Não há artistas não seguidos para seguir.", "info");
@@ -718,10 +714,10 @@ async function followAllNotFollowed() {
     }
 
     const artistIds = state.notFollowedList.map(a => a.id);
-    const batchSize = 50; // Spotify limita follow a 50 ids por request
+    const batchSize = 50;
     let success = true;
 
-    showToast(`Seguindo ${artistIds.length} artistas na sua conta do Spotify...`, "info");
+    showToast(`Seguindo ${artistIds.length} artistas no Spotify...`, "info");
 
     for (let i = 0; i < artistIds.length; i += batchSize) {
         const chunk = artistIds.slice(i, i + batchSize);
@@ -746,13 +742,10 @@ async function followAllNotFollowed() {
 
     if (success) {
         showToast(`Sucesso! Agora você segue todos os ${artistIds.length} artistas.`, "success");
-        // Conforme instrução: "Não deve recarregar a lista chamando api, apenas seguir os artistas"
-        // Ou seja, atualizamos apenas a UI de forma reativa:
-        // Movemos os itens da lista para seguidos e esvaziamos a lista de não seguidos localmente.
         state.notFollowedList = [];
         renderTab1();
     } else {
-        showToast("Ocorreu um problema ao tentar seguir alguns artistas.", "error");
+        showToast("Ocorreu um problema ao seguir alguns artistas.", "error");
     }
 }
 
@@ -766,7 +759,6 @@ function renderTab1() {
     const listNotFollowed = document.getElementById('list-not-followed');
     const listFollowedNoTracks = document.getElementById('list-followed-no-tracks');
 
-    // Renderizando Lista 1: Não seguidos
     if (state.notFollowedList.length === 0) {
         listNotFollowed.innerHTML = `
             <div class="h-full flex flex-col items-center justify-center text-center p-6 text-zinc-500">
@@ -801,7 +793,6 @@ function renderTab1() {
         }).join('');
     }
 
-    // Renderizando Lista 2: Seguidos sem faixas salvas
     if (state.followedNoTracksList.length === 0) {
         listFollowedNoTracks.innerHTML = `
             <div class="h-full flex flex-col items-center justify-center text-center p-6 text-zinc-500">
@@ -809,7 +800,7 @@ function renderTab1() {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <p class="text-sm font-semibold text-zinc-300">Sem órfãos identificados</p>
-                <p class="text-xs">Todos os artistas que você segue possuem ao menos uma música curtida na sua biblioteca.</p>
+                <p class="text-xs">Todos os artistas que você segue possuem faixas curtidas.</p>
             </div>
         `;
     } else {
@@ -839,9 +830,7 @@ function renderTab2() {
     const gridGenres = document.getElementById('grid-genres');
     const badgeTotal = document.getElementById('badge-total-genres');
     
-    // Filtra para remover os ocultos
     const activeGenres = state.genreFrequencies.filter(g => !state.hiddenGenres.has(g.name));
-    
     badgeTotal.innerText = activeGenres.length;
 
     if (activeGenres.length === 0) {
@@ -851,22 +840,52 @@ function renderTab2() {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
                 </svg>
                 <p class="text-sm font-semibold text-zinc-300">Nenhum gênero para listar</p>
-                <p class="text-xs max-w-sm">Todos os gêneros da sua biblioteca foram ocultados ou não há músicas em sua biblioteca.</p>
+                <p class="text-xs max-w-sm">Todos os gêneros foram ocultados ou não há dados disponíveis.</p>
             </div>
         `;
         return;
     }
 
+    // Calcula a frequência de cada pontuação para identificar empates
+    const countOccurrences = {};
+    activeGenres.forEach(g => {
+        countOccurrences[g.count] = (countOccurrences[g.count] || 0) + 1;
+    });
+
     gridGenres.innerHTML = activeGenres.map(item => {
+        const isTied = countOccurrences[item.count] > 1;
+
+        // Estilos e destaques visuais para gêneros com a mesma contagem/pontuação
+        const cardStyle = isTied
+            ? "bg-gradient-to-r from-amber-950/25 to-zinc-950/70 border-amber-500/40 hover:border-amber-400 shadow-md shadow-amber-950/20 ring-1 ring-amber-500/20"
+            : "bg-zinc-950/60 hover:bg-zinc-800/30 border-zinc-800/80";
+
+        const countBadgeStyle = isTied
+            ? "bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold"
+            : "bg-zinc-800 text-zinc-400 group-hover:bg-[#1DB954]/10 group-hover:text-[#1DB954]";
+
+        const tiedBadge = isTied
+            ? `<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 ml-2" title="${countOccurrences[item.count]} gêneros empatados com ${item.count} músicas">
+                <svg class="h-2.5 w-2.5 text-amber-400 inline" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.527.82-1.144 2.18-1.577 3.52-.404 1.25-.662 2.45-.722 3.122a6.002 6.002 0 00-3.324 4.545c-.244 1.402.164 2.822 1.09 3.86a6.01 6.01 0 004.512 2.005c2.316 0 4.417-1.31 5.438-3.385a6.005 6.005 0 00.37-3.924c-.31-1.318-.946-2.536-1.748-3.66a21.72 21.72 0 00-1.797-2.778zM10 18a4 4 0 01-3.65-2.378c-.287-.63-.377-1.332-.234-2.02.326-1.558 1.455-2.724 2.842-3.15.197.63.488 1.246.866 1.828.675 1.042 1.583 1.95 2.215 3.09.215.39.317.835.29 1.28A4.004 4.004 0 0110 18z" clip-rule="evenodd" />
+                </svg>
+                <span>Empatado</span>
+               </span>`
+            : '';
+
         return `
-            <div class="bg-zinc-950/60 hover:bg-zinc-800/30 border border-zinc-800/80 rounded-xl p-4 flex items-center justify-between transition-all group">
-                <div class="min-w-0 pr-3">
-                    <p class="text-sm font-bold text-white capitalize truncate tracking-wide">${item.name}</p>
-                    <span class="inline-flex items-center px-2 py-0.5 mt-1 rounded text-xs font-semibold bg-zinc-800 text-zinc-400 group-hover:bg-[#1DB954]/10 group-hover:text-[#1DB954] transition-colors">
+            <div class="${cardStyle} border rounded-xl p-4 flex items-center justify-between transition-all group relative overflow-hidden">
+                ${isTied ? '<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-amber-500"></div>' : ''}
+                <div class="min-w-0 pr-3 ${isTied ? 'pl-2' : ''}">
+                    <div class="flex items-center flex-wrap gap-y-1">
+                        <p class="text-sm font-bold text-white capitalize truncate tracking-wide">${item.name}</p>
+                        ${tiedBadge}
+                    </div>
+                    <span class="inline-flex items-center px-2 py-0.5 mt-1.5 rounded text-xs transition-colors ${countBadgeStyle}">
                         ${item.count} ${item.count === 1 ? 'música' : 'músicas'}
                     </span>
                 </div>
-                <button onclick="hideGenre('${escapeSingleQuote(item.name)}')" class="p-2 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-400 hover:text-red-400 hover:border-red-900/40 hover:bg-red-950/10 transition" title="Ocultar gênero">
+                <button onclick="hideGenre('${escapeSingleQuote(item.name)}')" class="p-2 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-400 hover:text-red-400 hover:border-red-900/40 hover:bg-red-950/10 transition flex-shrink-0" title="Ocultar gênero">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
                     </svg>
@@ -887,7 +906,7 @@ function renderTab3() {
         listHidden.innerHTML = `
             <div class="py-12 text-center text-zinc-500">
                 <p class="text-sm font-semibold text-zinc-400">Nenhum gênero ocultado ainda</p>
-                <p class="text-xs mt-1">Gêneros ocultados na Aba 2 serão arquivados aqui de forma organizada.</p>
+                <p class="text-xs mt-1">Gêneros ocultados na Aba 2 serão exibidos aqui.</p>
             </div>
         `;
         return;
@@ -908,33 +927,29 @@ function renderTab3() {
     }).join('');
 }
 
-// Função auxiliar para evitar quebra com strings com aspas simples/caracteres especiais
 function escapeSingleQuote(str) {
     return str.replace(/'/g, "\\'");
 }
 
-// Oculta um gênero adicionando ao Set
 function hideGenre(genreName) {
     state.hiddenGenres.add(genreName);
     saveHiddenState();
     renderTab2();
     renderTab3();
-    showToast(`O gênero "${genreName}" foi ocultado com sucesso.`, "info");
+    showToast(`O gênero "${genreName}" foi ocultado.`, "info");
 }
 
-// Desfaz ocultação de um gênero
 function restoreGenre(genreName) {
     state.hiddenGenres.delete(genreName);
     saveHiddenState();
     renderTab2();
     renderTab3();
-    showToast(`O gênero "${genreName}" voltou para a Aba 2.`, "success");
+    showToast(`O gênero "${genreName}" retornou para a lista.`, "success");
 }
 
-// Reseta todas as ocultações instantaneamente
 function resetAllHidden() {
     if (state.hiddenGenres.size === 0) {
-        showToast("Você não possui nenhum gênero ocultado no momento.", "info");
+        showToast("Você não possui nenhum gênero ocultado.", "info");
         return;
     }
     state.hiddenGenres.clear();
@@ -943,31 +958,23 @@ function resetAllHidden() {
     showToast("Todas as ocultações foram limpas!", "success");
 }
 
-// Persiste estado de ocultação no localStorage para manter a experiência pós refresh
 function saveHiddenState() {
     localStorage.setItem('hidden_genres', JSON.stringify(Array.from(state.hiddenGenres)));
 }
 
 function switchTab(tabIndex) {
-    // Esconder todos os conteúdos de abas
     document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-    
-    // Resetar estilos dos botões de abas
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('border-[#1DB954]', 'text-white');
         btn.classList.add('border-transparent', 'text-zinc-400');
     });
 
-    // Ativar aba selecionada
     document.getElementById(`tab-content-${tabIndex}`).classList.remove('hidden');
-    
-    // Ativar botão selecionado
     const activeBtn = document.getElementById(`tab-btn-${tabIndex}`);
     activeBtn.classList.remove('border-transparent', 'text-zinc-400');
     activeBtn.classList.add('border-[#1DB954]', 'text-white');
 }
 
-// Alternância de Telas Principais (Boas-vindas, Carregamento, Painel)
 function showLoginMode() {
     document.getElementById('section-login').classList.remove('hidden');
     document.getElementById('section-loading').classList.add('hidden');
@@ -993,9 +1000,7 @@ function showToast(message, type = "success") {
     const toastText = document.getElementById('toast-text');
     
     toastText.innerText = message;
-    
-    // Ajuste de cores baseado no tipo
-    toast.className = "flex items-center justify-between p-4 rounded-xl shadow-xl border-l-4 transition-all duration-300 transform scale-100 mb-6";
+    toast.className = "flex items-center justify-between p-4 rounded-xl shadow-xl border-l-4 transition-all duration-300 transform mb-6";
     
     if (type === "success") {
         toast.classList.add('bg-zinc-900', 'border-[#1DB954]', 'text-white');
@@ -1009,7 +1014,6 @@ function showToast(message, type = "success") {
 
     toast.classList.remove('hidden');
     
-    // Auto ocultação em 6 segundos
     clearTimeout(toastTimeout);
     toastTimeout = setTimeout(() => {
         dismissToast();
@@ -1040,16 +1044,14 @@ document.getElementById('btn-close-config').addEventListener('click', () => {
     }
     
     modalConfig.classList.add('hidden');
-    showToast("Configurações atualizadas para o seu ambiente local!", "info");
+    showToast("Configurações atualizadas!", "info");
 });
 
 document.getElementById('btn-use-local').addEventListener('click', () => {
-    // Detecta origem dinamicamente para facilitar testes locais e desenvolvimento no sandbox
     const detectedUri = window.location.origin + window.location.pathname;
     document.getElementById('config-redirect-uri').value = detectedUri;
 });
 
-// Fechar modal clicando fora da caixa
 modalConfig.addEventListener('click', (e) => {
     if (e.target === modalConfig) {
         modalConfig.classList.add('hidden');
@@ -1061,7 +1063,6 @@ document.getElementById('btn-logout').addEventListener('click', logout);
 document.getElementById('btn-follow-all').addEventListener('click', followAllNotFollowed);
 document.getElementById('btn-reset-hidden').addEventListener('click', resetAllHidden);
 
-// Inicializa a escuta e verificação no carregamento da janela
 window.onload = function() {
     checkAuth();
 };
