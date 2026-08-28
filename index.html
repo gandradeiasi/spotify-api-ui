@@ -86,6 +86,88 @@
         </div>
     </div>
 
+    <!-- Modal de Músicas do Gênero -->
+    <div id="modal-genre-tracks" class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 hidden backdrop-blur-sm">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="p-6 border-b border-zinc-800 flex items-center justify-between bg-zinc-900/90 sticky top-0 z-10">
+                <div class="min-w-0 pr-4">
+                    <div class="flex items-center space-x-2">
+                        <span class="px-2 py-0.5 text-xs font-bold bg-[#1DB954]/20 text-[#1DB954] border border-[#1DB954]/30 rounded uppercase tracking-wider">Gênero</span>
+                        <h3 id="genre-modal-title" class="text-xl font-black text-white capitalize truncate">Nome do Gênero</h3>
+                    </div>
+                    <p id="genre-modal-subtitle" class="text-xs text-zinc-400 mt-1">Carregando músicas...</p>
+                </div>
+                <button id="btn-close-genre-modal" class="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-full transition flex-shrink-0">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <div id="genre-modal-tracks-list" class="p-6 overflow-y-auto space-y-3 flex-grow divide-y divide-zinc-800/60">
+                <!-- Lista de faixas inserida dinamicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Salvamento / Exportação de Playlist -->
+    <div id="modal-save-playlist" class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 hidden backdrop-blur-sm">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-6">
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-4">
+                <div class="flex items-center space-x-2">
+                    <svg class="h-6 w-6 text-[#1DB954]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                    </svg>
+                    <h3 class="text-xl font-bold text-white">Exportar Playlist para o Spotify</h3>
+                </div>
+                <button id="btn-close-save-modal" class="text-zinc-400 hover:text-white p-1 rounded-full">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div id="save-modal-summary" class="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-2 text-xs text-zinc-300">
+                <!-- Resumo inserido dinamicamente -->
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Modo de Exportação</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="flex items-center space-x-2 p-3 bg-zinc-950 border border-zinc-800 rounded-xl cursor-pointer hover:border-[#1DB954]/50 transition">
+                            <input type="radio" name="save-mode" value="new" checked onchange="toggleSaveMode('new')" class="text-[#1DB954] focus:ring-[#1DB954]">
+                            <span class="text-xs font-bold text-white">Criar Nova</span>
+                        </label>
+                        <label class="flex items-center space-x-2 p-3 bg-zinc-950 border border-zinc-800 rounded-xl cursor-pointer hover:border-[#1DB954]/50 transition">
+                            <input type="radio" name="save-mode" value="overwrite" onchange="toggleSaveMode('overwrite')" class="text-[#1DB954] focus:ring-[#1DB954]">
+                            <span class="text-xs font-bold text-white">Sobrescrever</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="container-save-new" class="space-y-2">
+                    <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider">Nome da Nova Playlist</label>
+                    <input type="text" id="input-new-playlist-name" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#1DB954]" placeholder="Ex: Minha Playlist Otimizada">
+                </div>
+
+                <div id="container-save-overwrite" class="space-y-2 hidden">
+                    <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider">Selecionar Playlist Existente</label>
+                    <select id="select-overwrite-playlist" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#1DB954]">
+                        <option value="">Carregando suas playlists...</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex space-x-3 justify-end pt-2 border-t border-zinc-800">
+                <button id="btn-cancel-save-modal" class="px-5 py-2.5 text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-full transition">Cancelar</button>
+                <button id="btn-confirm-save-modal" onclick="executeSavePlaylist()" class="px-6 py-2.5 text-xs font-extrabold bg-[#1DB954] hover:bg-[#1ed760] text-black rounded-full shadow transition transform hover:scale-105 active:scale-95 duration-200">
+                    SALVAR NO SPOTIFY
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Conteúdo Principal -->
     <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
@@ -153,6 +235,13 @@
                     Aba 3: Gêneros Ocultos
                     <span id="badge-hidden-genres" class="ml-2 bg-red-950/50 text-red-400 text-xs px-2 py-0.5 rounded-full">0</span>
                 </button>
+                <button onclick="switchTab(4)" id="tab-btn-4" class="tab-btn inline-flex items-center px-6 py-4 border-b-2 font-bold text-sm tracking-wide transition border-transparent text-zinc-400 hover:text-zinc-200">
+                    <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Aba 4: Criar Playlist
+                    <span id="badge-playlist-builder" class="ml-2 bg-[#1DB954]/20 text-[#1DB954] text-xs px-2 py-0.5 rounded-full font-bold">Novo</span>
+                </button>
             </div>
 
             <!-- Toast de Notificação Embutido -->
@@ -195,7 +284,7 @@
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-zinc-800 mb-6 gap-4">
                         <div>
                             <h2 class="text-xl font-extrabold text-white">Frequência de Gêneros</h2>
-                            <p class="text-sm text-zinc-400">Análise de gêneros ordenados do menor para o maior. Gêneros com a mesma pontuação recebem destaque visual.</p>
+                            <p class="text-sm text-zinc-400">Análise de gêneros ordenados do menor para o maior. Clique em um gênero para ver a lista de músicas.</p>
                         </div>
                         <button id="btn-reset-hidden" class="bg-zinc-800 hover:bg-zinc-700 text-white font-semibold text-xs px-5 py-2.5 rounded-full border border-zinc-700 transition">
                             RESETAR TODAS OCULTAÇÕES
@@ -216,6 +305,191 @@
 
                     <div id="list-hidden-genres" class="space-y-3 max-w-xl"></div>
                 </div>
+            </div>
+
+            <!-- CONTEÚDO DA ABA 4: CRIADOR DE PLAYLISTS -->
+            <div id="tab-content-4" class="tab-content hidden space-y-6">
+                
+                <!-- Header & Visual Stepper -->
+                <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-6">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800 pb-4">
+                        <div>
+                            <h2 class="text-2xl font-black text-white tracking-tight flex items-center space-x-2">
+                                <span>Criador Inteligente de Playlists</span>
+                            </h2>
+                            <p class="text-xs text-zinc-400">Monte playlists personalizadas filtrando por conteúdo explícito, tempo mínimo, gêneros e artistas.</p>
+                        </div>
+                        <button onclick="resetPlaylistBuilder()" class="inline-flex items-center space-x-1.5 text-xs text-zinc-400 hover:text-red-400 bg-zinc-800/80 hover:bg-zinc-800 px-4 py-2 rounded-full border border-zinc-700/60 transition self-start md:self-auto">
+                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 15H16.5m0 0v4.5" />
+                            </svg>
+                            <span>Reiniciar Filtros</span>
+                        </button>
+                    </div>
+
+                    <!-- Stepper Bar -->
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-center">
+                        <div id="pb-step-tab-1" onclick="setPBStep(1)" class="p-3 rounded-xl border text-xs font-bold transition cursor-pointer bg-[#1DB954]/10 border-[#1DB954] text-[#1DB954]">
+                            <span class="block text-[10px] opacity-75 uppercase tracking-wider">Etapa 1</span>
+                            1. Configuração
+                        </div>
+                        <div id="pb-step-tab-2" onclick="setPBStep(2)" class="p-3 rounded-xl border text-xs font-bold transition cursor-pointer bg-zinc-950/60 border-zinc-800 text-zinc-500 hover:text-zinc-300">
+                            <span class="block text-[10px] opacity-75 uppercase tracking-wider">Etapa 2</span>
+                            2. Filtro de Gêneros
+                        </div>
+                        <div id="pb-step-tab-3" onclick="setPBStep(3)" class="p-3 rounded-xl border text-xs font-bold transition cursor-pointer bg-zinc-950/60 border-zinc-800 text-zinc-500 hover:text-zinc-300">
+                            <span class="block text-[10px] opacity-75 uppercase tracking-wider">Etapa 3</span>
+                            3. Filtro de Artistas
+                        </div>
+                        <div id="pb-step-tab-4" class="p-3 rounded-xl border text-xs font-bold transition bg-zinc-950/60 border-zinc-800 text-zinc-500 opacity-60">
+                            <span class="block text-[10px] opacity-75 uppercase tracking-wider">Etapa 4</span>
+                            4. Confirmar & Salvar
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sticky Accumulator Summary Card -->
+                <div class="bg-gradient-to-r from-zinc-900 via-zinc-900 to-zinc-950 border border-zinc-800 rounded-2xl p-5 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 sticky top-20 z-30 backdrop-blur-md bg-opacity-95">
+                    <div class="flex items-center space-x-4 w-full md:w-auto">
+                        <div id="pb-status-icon" class="h-12 w-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 flex-shrink-0">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Tempo Acumulado</span>
+                                <span id="pb-badge-valid" class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">Abaixo do Mínimo</span>
+                            </div>
+                            <div class="flex items-baseline space-x-2 mt-0.5">
+                                <span id="pb-current-duration" class="text-2xl font-black text-white">0 min</span>
+                                <span class="text-xs text-zinc-500">/ mínimo alvo: <strong id="pb-target-duration-display" class="text-zinc-300">60 min</strong></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar & Track Count -->
+                    <div class="w-full md:w-1/3 space-y-2">
+                        <div class="flex justify-between text-xs font-semibold">
+                            <span id="pb-track-count" class="text-zinc-400">0 faixas elegíveis</span>
+                            <span id="pb-pct-text" class="text-[#1DB954]">0%</span>
+                        </div>
+                        <div class="w-full bg-zinc-950 h-3 rounded-full overflow-hidden border border-zinc-800/80 p-0.5">
+                            <div id="pb-progress-fill" class="h-full bg-amber-500 rounded-full transition-all duration-300 w-0"></div>
+                        </div>
+                    </div>
+
+                    <!-- Action Button -->
+                    <div class="w-full md:w-auto flex justify-end">
+                        <button id="pb-btn-action" onclick="advancePBStep()" class="w-full md:w-auto px-6 py-3 bg-zinc-800 text-zinc-500 font-bold text-xs rounded-full transition cursor-not-allowed pointer-events-none">
+                            AVANÇAR PARA GÊNEROS →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ETAPA 1: CONFIGURAÇÃO -->
+                <div id="pb-container-step-1" class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-6">
+                    <h3 class="text-lg font-bold text-white border-b border-zinc-800 pb-3 flex items-center space-x-2">
+                        <span>1. Seleção de Regras Iniciais</span>
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Conteúdo Explícito -->
+                        <div class="bg-zinc-950 p-5 rounded-xl border border-zinc-800/80 space-y-3">
+                            <label class="block text-xs font-bold text-zinc-300 uppercase tracking-wider">Conteúdo Explícito</label>
+                            <p class="text-xs text-zinc-400">Defina se deseja incluir faixas rotuladas como explícitas na sua playlist.</p>
+                            <div class="space-y-2 pt-2">
+                                <label class="flex items-center space-x-3 p-3 bg-zinc-900/60 rounded-lg border border-zinc-800 cursor-pointer hover:border-[#1DB954]/50 transition">
+                                    <input type="radio" name="pb-explicit" value="all" checked onchange="updatePBConfig()" class="text-[#1DB954] focus:ring-[#1DB954]">
+                                    <div>
+                                        <p class="text-sm font-bold text-white">Todas as Músicas</p>
+                                        <p class="text-[11px] text-zinc-400">Permite faixas limpas e faixas com conteúdo explícito.</p>
+                                    </div>
+                                </label>
+                                <label class="flex items-center space-x-3 p-3 bg-zinc-900/60 rounded-lg border border-zinc-800 cursor-pointer hover:border-[#1DB954]/50 transition">
+                                    <input type="radio" name="pb-explicit" value="clean" onchange="updatePBConfig()" class="text-[#1DB954] focus:ring-[#1DB954]">
+                                    <div>
+                                        <p class="text-sm font-bold text-white">Apenas Não-Explícitas (Clean)</p>
+                                        <p class="text-[11px] text-zinc-400">Filtra e remove automaticamente qualquer faixa com selo explícito.</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Tempo Alvo Mínimo -->
+                        <div class="bg-zinc-950 p-5 rounded-xl border border-zinc-800/80 space-y-3">
+                            <label class="block text-xs font-bold text-zinc-300 uppercase tracking-wider">Tempo Alvo Mínimo (Minutos)</label>
+                            <p class="text-xs text-zinc-400">Defina a quantidade mínima em minutos de música que você quer ter na playlist.</p>
+                            
+                            <div class="flex items-center space-x-3 pt-2">
+                                <input type="number" id="pb-input-min-minutes" value="60" min="1" max="1440" oninput="updatePBConfig()" class="w-32 bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-base font-bold text-white focus:outline-none focus:ring-2 focus:ring-[#1DB954]">
+                                <span class="text-sm font-semibold text-zinc-400">minutos</span>
+                            </div>
+
+                            <!-- Preset Pills -->
+                            <div class="pt-2">
+                                <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block mb-1.5">Atalhos rápidos:</span>
+                                <div class="flex flex-wrap gap-2">
+                                    <button onclick="setPBTargetMinutes(15)" class="px-3 py-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs rounded-full border border-zinc-800 font-medium transition">15 min</button>
+                                    <button onclick="setPBTargetMinutes(30)" class="px-3 py-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs rounded-full border border-zinc-800 font-medium transition">30 min</button>
+                                    <button onclick="setPBTargetMinutes(45)" class="px-3 py-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs rounded-full border border-zinc-800 font-medium transition">45 min</button>
+                                    <button onclick="setPBTargetMinutes(60)" class="px-3 py-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs rounded-full border border-zinc-800 font-medium transition">60 min (1h)</button>
+                                    <button onclick="setPBTargetMinutes(90)" class="px-3 py-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs rounded-full border border-zinc-800 font-medium transition">90 min (1h30)</button>
+                                    <button onclick="setPBTargetMinutes(120)" class="px-3 py-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs rounded-full border border-zinc-800 font-medium transition">120 min (2h)</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ETAPA 2: FILTRO DE GÊNEROS -->
+                <div id="pb-container-step-2" class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-6 hidden">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-4">
+                        <div>
+                            <h3 class="text-lg font-bold text-white flex items-center space-x-2">
+                                <span>2. Filtro por Gêneros Musicais</span>
+                            </h3>
+                            <p class="text-xs text-zinc-400">Aprove ou bane gêneros. Se um artista tiver algum gênero banido, todas as suas faixas são desqualificadas.</p>
+                        </div>
+
+                        <!-- Barra de Pesquisa de Gênero -->
+                        <div class="relative w-full sm:w-64">
+                            <input type="text" id="pb-search-genre" oninput="renderPBGenres()" placeholder="Buscar gênero..." class="w-full bg-zinc-950 border border-zinc-800 rounded-full pl-9 pr-4 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#1DB954]">
+                            <svg class="h-4 w-4 text-zinc-500 absolute left-3 top-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div id="pb-grid-genres" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <!-- Cards de gênero dinâmicos -->
+                    </div>
+                </div>
+
+                <!-- ETAPA 3: FILTRO DE ARTISTAS -->
+                <div id="pb-container-step-3" class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-6 hidden">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-4">
+                        <div>
+                            <h3 class="text-lg font-bold text-white flex items-center space-x-2">
+                                <span>3. Filtro por Artistas Elegíveis</span>
+                            </h3>
+                            <p class="text-xs text-zinc-400">Aprove ou bane artistas. Se o banimento reduzir o tempo total abaixo do mínimo, você retornará automaticamente à Etapa 2.</p>
+                        </div>
+
+                        <!-- Barra de Pesquisa de Artista -->
+                        <div class="relative w-full sm:w-64">
+                            <input type="text" id="pb-search-artist" oninput="renderPBArtists()" placeholder="Buscar artista..." class="w-full bg-zinc-950 border border-zinc-800 rounded-full pl-9 pr-4 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#1DB954]">
+                            <svg class="h-4 w-4 text-zinc-500 absolute left-3 top-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div id="pb-grid-artists" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <!-- Cards de artistas dinâmicos -->
+                    </div>
+                </div>
+
             </div>
 
         </div>
@@ -255,7 +529,15 @@ const state = {
     notFollowedList: [],
     followedNoTracksList: [],
     genreFrequencies: [],
-    hiddenGenres: new Set()
+    hiddenGenres: new Set(),
+    playlistBuilder: {
+        step: 1,
+        allowExplicit: true,
+        targetMinMinutes: 60,
+        genreStates: {},
+        artistStates: {},
+        userPlaylists: []
+    }
 };
 
 if (localStorage.getItem('hidden_genres')) {
@@ -422,7 +704,7 @@ async function loginWithSpotify() {
 
     window.localStorage.setItem('code_verifier', codeVerifier);
 
-    const scopes = 'user-library-read user-follow-read user-follow-modify';
+    const scopes = 'user-library-read user-follow-read user-follow-modify playlist-modify-public playlist-modify-private playlist-read-private';
     const authUrl = new URL("https://accounts.spotify.com/authorize");
     const params = {
         response_type: 'code',
@@ -826,6 +1108,117 @@ function renderTab1() {
     }
 }
 
+function renderAll() {
+    renderTab1();
+    renderTab2();
+    renderTab3();
+    updatePlaylistBuilderUI();
+}
+
+// ----------------------------------------------------
+// HELPERS DE FORMATAÇÃO E UTILITÁRIOS
+// ----------------------------------------------------
+function formatMsToMinSec(ms) {
+    if (!ms || isNaN(ms)) return "0:00";
+    const totalSec = Math.floor(ms / 1000);
+    const mins = Math.floor(totalSec / 60);
+    const secs = totalSec % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+}
+
+function formatMsToHuman(ms) {
+    if (!ms || isNaN(ms)) return "0 min";
+    const totalSec = Math.floor(ms / 1000);
+    const hrs = Math.floor(totalSec / 3600);
+    const mins = Math.floor((totalSec % 3600) / 60);
+    const secs = totalSec % 60;
+
+    if (hrs > 0) {
+        return `${hrs}h ${mins}m`;
+    } else if (mins > 0) {
+        return `${mins}m ${secs}s`;
+    } else {
+        return `${secs}s`;
+    }
+}
+
+// ----------------------------------------------------
+// MODAL DE MÚSICAS POR GÊNERO (ABA 2)
+// ----------------------------------------------------
+function openGenreModal(genreName) {
+    const modal = document.getElementById('modal-genre-tracks');
+    const titleEl = document.getElementById('genre-modal-title');
+    const subtitleEl = document.getElementById('genre-modal-subtitle');
+    const listEl = document.getElementById('genre-modal-tracks-list');
+
+    titleEl.innerText = genreName;
+
+    const matchingTracks = state.savedTracks.filter(item => {
+        if (!item.track || !item.track.artists) return false;
+        return item.track.artists.some(artist => {
+            const fullArtist = state.artistsMap[artist.id];
+            return fullArtist && fullArtist.genres && fullArtist.genres.includes(genreName);
+        });
+    });
+
+    const totalMs = matchingTracks.reduce((acc, item) => acc + (item.track ? (item.track.duration_ms || 0) : 0), 0);
+    subtitleEl.innerText = `${matchingTracks.length} ${matchingTracks.length === 1 ? 'música' : 'músicas'} • Duração total: ${formatMsToHuman(totalMs)}`;
+
+    if (matchingTracks.length === 0) {
+        listEl.innerHTML = `
+            <div class="py-12 text-center text-zinc-500 space-y-2">
+                <p class="text-sm font-bold text-zinc-300">Nenhuma música encontrada</p>
+                <p class="text-xs">Nenhuma faixa na sua biblioteca corresponde a este gênero.</p>
+            </div>
+        `;
+    } else {
+        listEl.innerHTML = matchingTracks.map((item, index) => {
+            const track = item.track;
+            const albumCover = (track.album && track.album.images && track.album.images.length > 0)
+                ? track.album.images[track.album.images.length - 1].url
+                : 'https://placehold.co/80x80/27272a/ffffff?text=🎵';
+            
+            const artistNames = track.artists ? track.artists.map(a => a.name).join(', ') : 'Artista Desconhecido';
+            const albumName = track.album ? track.album.name : 'Álbum Desconhecido';
+            const explicitTag = track.explicit
+                ? `<span class="px-1.5 py-0.5 text-[9px] font-extrabold bg-red-950/80 text-red-400 border border-red-800/60 rounded">EXPLICIT</span>`
+                : '';
+            const spotifyUrl = track.external_urls ? track.external_urls.spotify : '#';
+
+            return `
+                <div class="py-3 flex items-center justify-between gap-4 hover:bg-zinc-800/30 px-2 rounded-xl transition group">
+                    <div class="flex items-center space-x-3 min-w-0">
+                        <span class="text-xs font-bold text-zinc-500 w-5 text-right flex-shrink-0">${index + 1}</span>
+                        <img src="${albumCover}" class="h-11 w-11 rounded-lg object-cover border border-zinc-800 flex-shrink-0" alt="Capa">
+                        <div class="min-w-0">
+                            <div class="flex items-center space-x-2">
+                                <p class="text-sm font-bold text-white truncate">${track.name}</p>
+                                ${explicitTag}
+                            </div>
+                            <p class="text-xs text-zinc-400 truncate">${artistNames} • <span class="text-zinc-500">${albumName}</span></p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-4 flex-shrink-0">
+                        <span class="text-xs font-semibold text-zinc-400">${formatMsToMinSec(track.duration_ms)}</span>
+                        <a href="${spotifyUrl}" target="_blank" class="p-2 bg-zinc-800 hover:bg-[#1DB954] hover:text-black text-zinc-400 rounded-full transition" title="Tocar no Spotify">
+                            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.586 14.424c-.18.295-.563.387-.857.207-2.35-1.438-5.305-1.764-8.788-.97-.336.075-.668-.135-.744-.47-.077-.337.135-.669.47-.745 3.812-.87 7.08-.495 9.71 1.114.294.18.388.563.208.857zm1.225-2.72c-.227.367-.707.487-1.074.26-2.69-1.654-6.79-2.134-9.97-1.17-.413.125-.85-.107-.975-.52-.125-.413.107-.85.52-.975 3.637-1.104 8.142-.568 11.238 1.332.367.227.487.707.26 1.073zm.107-2.827C14.33 8.808 8.414 8.61 5.004 9.645c-.524.16-1.078-.142-1.237-.666-.16-.524.142-1.078.666-1.237 3.916-1.188 10.45-.966 14.99 1.728.47.28.623.893.343 1.363-.28.47-.893.623-1.363.343z"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    modal.classList.remove('hidden');
+}
+
+function closeGenreModal() {
+    document.getElementById('modal-genre-tracks').classList.add('hidden');
+}
+
 function renderTab2() {
     const gridGenres = document.getElementById('grid-genres');
     const badgeTotal = document.getElementById('badge-total-genres');
@@ -846,7 +1239,6 @@ function renderTab2() {
         return;
     }
 
-    // Calcula a frequência de cada pontuação para identificar empates
     const countOccurrences = {};
     activeGenres.forEach(g => {
         countOccurrences[g.count] = (countOccurrences[g.count] || 0) + 1;
@@ -855,10 +1247,9 @@ function renderTab2() {
     gridGenres.innerHTML = activeGenres.map(item => {
         const isTied = countOccurrences[item.count] > 1;
 
-        // Estilos e destaques visuais para gêneros com a mesma contagem/pontuação
         const cardStyle = isTied
             ? "bg-gradient-to-r from-amber-950/25 to-zinc-950/70 border-amber-500/40 hover:border-amber-400 shadow-md shadow-amber-950/20 ring-1 ring-amber-500/20"
-            : "bg-zinc-950/60 hover:bg-zinc-800/30 border-zinc-800/80";
+            : "bg-zinc-950/60 hover:bg-zinc-800/30 border-zinc-800/80 hover:border-zinc-700";
 
         const countBadgeStyle = isTied
             ? "bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold"
@@ -874,18 +1265,18 @@ function renderTab2() {
             : '';
 
         return `
-            <div class="${cardStyle} border rounded-xl p-4 flex items-center justify-between transition-all group relative overflow-hidden">
+            <div onclick="openGenreModal('${escapeSingleQuote(item.name)}')" class="${cardStyle} border rounded-xl p-4 flex items-center justify-between transition-all group relative overflow-hidden cursor-pointer">
                 ${isTied ? '<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-amber-500"></div>' : ''}
                 <div class="min-w-0 pr-3 ${isTied ? 'pl-2' : ''}">
                     <div class="flex items-center flex-wrap gap-y-1">
-                        <p class="text-sm font-bold text-white capitalize truncate tracking-wide">${item.name}</p>
+                        <p class="text-sm font-bold text-white capitalize truncate tracking-wide group-hover:text-[#1DB954] transition">${item.name}</p>
                         ${tiedBadge}
                     </div>
                     <span class="inline-flex items-center px-2 py-0.5 mt-1.5 rounded text-xs transition-colors ${countBadgeStyle}">
                         ${item.count} ${item.count === 1 ? 'música' : 'músicas'}
                     </span>
                 </div>
-                <button onclick="hideGenre('${escapeSingleQuote(item.name)}')" class="p-2 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-400 hover:text-red-400 hover:border-red-900/40 hover:bg-red-950/10 transition flex-shrink-0" title="Ocultar gênero">
+                <button onclick="event.stopPropagation(); hideGenre('${escapeSingleQuote(item.name)}')" class="p-2 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-400 hover:text-red-400 hover:border-red-900/40 hover:bg-red-950/10 transition flex-shrink-0" title="Ocultar gênero">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
                     </svg>
@@ -971,8 +1362,14 @@ function switchTab(tabIndex) {
 
     document.getElementById(`tab-content-${tabIndex}`).classList.remove('hidden');
     const activeBtn = document.getElementById(`tab-btn-${tabIndex}`);
-    activeBtn.classList.remove('border-transparent', 'text-zinc-400');
-    activeBtn.classList.add('border-[#1DB954]', 'text-white');
+    if (activeBtn) {
+        activeBtn.classList.remove('border-transparent', 'text-zinc-400');
+        activeBtn.classList.add('border-[#1DB954]', 'text-white');
+    }
+
+    if (tabIndex === 4) {
+        updatePlaylistBuilderUI();
+    }
 }
 
 function showLoginMode() {
