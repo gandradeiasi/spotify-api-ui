@@ -43,14 +43,25 @@
                 <span class="font-extrabold text-xl tracking-tight text-white">Spotify <span class="text-[#1DB954]">Optimizer</span></span>
             </div>
             
-            <!-- Perfil / Configuração / Logout -->
-            <div class="flex items-center space-x-4">
+            <!-- Perfil / Configuração / Logout / Cache -->
+            <div class="flex items-center space-x-3">
+                <div id="cache-info-badge" class="hidden items-center space-x-2 bg-zinc-950 border border-zinc-800 rounded-full px-3 py-1 text-xs">
+                    <span class="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse" id="cache-dot"></span>
+                    <span id="cache-status-text" class="text-zinc-400 font-medium">Cache ativo</span>
+                    <button id="btn-force-refresh" onclick="forceRefreshSavedTracks()" class="ml-1 p-1 hover:bg-zinc-800 rounded-full text-zinc-400 hover:text-emerald-400 transition cursor-pointer" title="Forçar Atualização Completa do Spotify (Ignorar Cache de 2 Horas)">
+                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 15H16.5m0 0v4.5" />
+                        </svg>
+                    </button>
+                </div>
+
                 <button id="btn-config" class="text-zinc-400 hover:text-white p-2 rounded-full hover:bg-zinc-800 transition" title="Configurações de Conexão">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                 </button>
+
                 <div id="user-profile-container" class="hidden flex items-center space-x-3">
                     <img id="user-avatar" class="h-8 w-8 rounded-full border border-zinc-700 bg-zinc-800" src="" alt="Avatar" onerror="this.src='https://placehold.co/100x100/18181b/ffffff?text=U'">
                     <span id="user-name" class="text-sm font-medium hidden sm:inline-block">Usuário</span>
@@ -866,7 +877,48 @@ async function fetchArtistsDetails(artistIds) {
     return artistDetails;
 }
 
-async function loadSpotifyData() {
+const CACHE_KEY_TRACKS = 'cache_saved_tracks';
+const CACHE_KEY_ARTISTS_MAP = 'cache_artists_map';
+const CACHE_KEY_TIMESTAMP = 'cache_saved_tracks_ts';
+const CACHE_DURATION_MS = 2 * 60 * 60 * 1000; // 2 horas em milissegundos
+
+async function forceRefreshSavedTracks() {
+    try {
+        localStorage.removeItem(CACHE_KEY_TRACKS);
+        localStorage.removeItem(CACHE_KEY_ARTISTS_MAP);
+        localStorage.removeItem(CACHE_KEY_TIMESTAMP);
+    } catch(e) {}
+    
+    showToast("Solicitando sincronização completa com o Spotify...", "info");
+    await loadSpotifyData(true);
+}
+
+function updateCacheStatusUI() {
+    const badge = document.getElementById('cache-info-badge');
+    const statusText = document.getElementById('cache-status-text');
+    const dot = document.getElementById('cache-dot');
+    if (!badge || !statusText) return;
+
+    const cachedTs = parseInt(localStorage.getItem(CACHE_KEY_TIMESTAMP) || '0', 10);
+    if (cachedTs > 0) {
+        const diffMs = Date.now() - cachedTs;
+        if (diffMs < CACHE_DURATION_MS) {
+            const minsAgo = Math.floor(diffMs / 60000);
+            const timeStr = minsAgo < 1 ? 'agora mesmo' : `há ${minsAgo}m`;
+            statusText.innerText = `Cache (${timeStr})`;
+            if (dot) dot.className = "inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse";
+            badge.classList.remove('hidden');
+            badge.classList.add('flex');
+            return;
+        }
+    }
+    statusText.innerText = `Dados da API`;
+    if (dot) dot.className = "inline-block h-2 w-2 rounded-full bg-blue-500";
+    badge.classList.remove('hidden');
+    badge.classList.add('flex');
+}
+
+async function loadSpotifyData(forceRefresh = false) {
     showLoadingMode();
 
     const profile = await spotifyFetch('https://api.spotify.com/v1/me');
@@ -879,29 +931,68 @@ async function loadSpotifyData() {
         }
     }
 
-    const [tracks, followed] = await Promise.all([
-        fetchAllSavedTracks(),
-        fetchAllFollowedArtists()
-    ]);
+    const now = Date.now();
+    const cachedTs = parseInt(localStorage.getItem(CACHE_KEY_TIMESTAMP) || '0', 10);
+    const isCacheValid = !forceRefresh && cachedTs > 0 && (now - cachedTs < CACHE_DURATION_MS);
+
+    let tracks = null;
+    let artistsMap = null;
+
+    if (isCacheValid) {
+        try {
+            updateProgress("Carregando do cache...", "Recuperando músicas salvas nas últimas 2 horas...", 50);
+            const rawTracks = localStorage.getItem(CACHE_KEY_TRACKS);
+            const rawArtists = localStorage.getItem(CACHE_KEY_ARTISTS_MAP);
+            if (rawTracks && rawArtists) {
+                tracks = JSON.parse(rawTracks);
+                artistsMap = JSON.parse(rawArtists);
+            }
+        } catch(e) {
+            console.warn("Falha ao ler dados do cache local:", e);
+            tracks = null;
+            artistsMap = null;
+        }
+    }
+
+    if (!tracks || !artistsMap) {
+        updateProgress("Buscando biblioteca...", "Baixando lista de faixas salvas do Spotify...", 10);
+        tracks = await fetchAllSavedTracks();
+        
+        const uniqueArtistIds = new Set();
+        tracks.forEach(item => {
+            if (item.track && item.track.artists) {
+                item.track.artists.forEach(artist => {
+                    uniqueArtistIds.add(artist.id);
+                });
+            }
+        });
+
+        artistsMap = await fetchArtistsDetails(uniqueArtistIds);
+
+        try {
+            localStorage.setItem(CACHE_KEY_TRACKS, JSON.stringify(tracks));
+            localStorage.setItem(CACHE_KEY_ARTISTS_MAP, JSON.stringify(artistsMap));
+            localStorage.setItem(CACHE_KEY_TIMESTAMP, Date.now().toString());
+        } catch(e) {
+            console.warn("Aviso: Limite de armazenamento local excedido. O cache não pôde ser salvo em disco.", e);
+        }
+    }
+
+    const followed = await fetchAllFollowedArtists();
 
     state.savedTracks = tracks;
     state.followedArtists = followed;
-
-    const uniqueArtistIds = new Set();
-    tracks.forEach(item => {
-        if (item.track && item.track.artists) {
-            item.track.artists.forEach(artist => {
-                uniqueArtistIds.add(artist.id);
-            });
-        }
-    });
-
-    state.artistsMap = await fetchArtistsDetails(uniqueArtistIds);
+    state.artistsMap = artistsMap;
 
     updateProgress("Pronto!", "Montando interface...", 100);
     processData();
     renderAll();
+    updateCacheStatusUI();
     showDashboardMode();
+
+    if (forceRefresh) {
+        showToast(`Biblioteca atualizada com sucesso! (${tracks.length} músicas salvas)`, "success");
+    }
 }
 
 function processData() {
@@ -983,7 +1074,7 @@ function processData() {
         if (a.count === b.count) {
             return a.name.localeCompare(b.name);
         }
-        return a.count - b.count;
+        return b.count - a.count;
     });
 
     state.genreFrequencies = sortedGenres;
@@ -1393,18 +1484,25 @@ function getEligibleTracks() {
         }
     });
 
-    const allowedArtistIdsByGenre = new Set();
-    if (approvedGenres.size > 0) {
-        Object.keys(state.artistsMap).forEach(artistId => {
-            const artist = state.artistsMap[artistId];
-            if (artist && artist.genres && !bannedArtistIdsByGenre.has(artistId)) {
-                const hasApprovedGenre = artist.genres.some(g => approvedGenres.has(g));
-                if (hasApprovedGenre) {
-                    allowedArtistIdsByGenre.add(artistId);
-                }
-            }
-        });
+    // "enquanto não aprova ou bane, o artista ou genero não deve ser contabilizado no total"
+    if (approvedGenres.size === 0) {
+        return {
+            eligibleTracks: [],
+            totalDurationMs: 0,
+            count: 0
+        };
     }
+
+    const allowedArtistIdsByGenre = new Set();
+    Object.keys(state.artistsMap).forEach(artistId => {
+        const artist = state.artistsMap[artistId];
+        if (artist && artist.genres && !bannedArtistIdsByGenre.has(artistId)) {
+            const hasApprovedGenre = artist.genres.some(g => approvedGenres.has(g));
+            if (hasApprovedGenre) {
+                allowedArtistIdsByGenre.add(artistId);
+            }
+        }
+    });
 
     const approvedArtists = new Set(Object.keys(pb.artistStates).filter(a => pb.artistStates[a] === 'approved'));
     const bannedArtists = new Set(Object.keys(pb.artistStates).filter(a => pb.artistStates[a] === 'banned'));
@@ -1427,11 +1525,9 @@ function getEligibleTracks() {
             return false;
         }
 
-        if (approvedGenres.size > 0) {
-            const hasArtistWithApprovedGenre = track.artists.some(a => allowedArtistIdsByGenre.has(a.id));
-            if (!hasArtistWithApprovedGenre) {
-                return false;
-            }
+        const hasArtistWithApprovedGenre = track.artists.some(a => allowedArtistIdsByGenre.has(a.id));
+        if (!hasArtistWithApprovedGenre) {
+            return false;
         }
 
         if (approvedArtists.size > 0) {
@@ -1614,6 +1710,17 @@ function renderPBGenres() {
     const searchVal = (document.getElementById('pb-search-genre')?.value || '').toLowerCase().trim();
     const pb = state.playlistBuilder;
 
+    // Calcular contagem de artistas únicos por gênero
+    const genreArtistCounts = {};
+    Object.values(state.artistsMap).forEach(artist => {
+        if (artist && artist.genres) {
+            artist.genres.forEach(g => {
+                if (!genreArtistCounts[g]) genreArtistCounts[g] = new Set();
+                genreArtistCounts[g].add(artist.id);
+            });
+        }
+    });
+
     const allGenres = state.genreFrequencies.filter(g => !state.hiddenGenres.has(g.name));
     const filteredGenres = allGenres.filter(g => g.name.toLowerCase().includes(searchVal));
 
@@ -1622,8 +1729,21 @@ function renderPBGenres() {
         return;
     }
 
+    const statePriority = { approved: 0, neutral: 1, banned: 2 };
+    filteredGenres.sort((a, b) => {
+        const stA = statePriority[pb.genreStates[a.name] || 'neutral'];
+        const stB = statePriority[pb.genreStates[b.name] || 'neutral'];
+        if (stA !== stB) return stA - stB;
+        if (b.count !== a.count) return b.count - a.count;
+        const artCountA = genreArtistCounts[a.name] ? genreArtistCounts[a.name].size : 0;
+        const artCountB = genreArtistCounts[b.name] ? genreArtistCounts[b.name].size : 0;
+        if (artCountB !== artCountA) return artCountB - artCountA;
+        return a.name.localeCompare(b.name);
+    });
+
     grid.innerHTML = filteredGenres.map(item => {
         const st = pb.genreStates[item.name] || 'neutral';
+        const artCount = genreArtistCounts[item.name] ? genreArtistCounts[item.name].size : 0;
         
         let cardBg = "bg-zinc-950/60 border-zinc-800/80";
         if (st === 'approved') cardBg = "bg-emerald-950/30 border-emerald-500/50 ring-1 ring-emerald-500/30";
@@ -1634,7 +1754,7 @@ function renderPBGenres() {
                 <div class="flex items-start justify-between">
                     <div class="min-w-0 pr-2">
                         <p class="text-sm font-bold text-white capitalize truncate">${item.name}</p>
-                        <span class="text-[11px] text-zinc-400">${item.count} ${item.count === 1 ? 'música' : 'músicas'}</span>
+                        <span class="text-[11px] text-zinc-400">${item.count} ${item.count === 1 ? 'música' : 'músicas'} • ${artCount} ${artCount === 1 ? 'artista' : 'artistas'}</span>
                     </div>
                 </div>
 
@@ -1707,14 +1827,21 @@ function renderPBArtists() {
         });
     });
 
-    eligibleArtists.sort((a,b) => b.trackCount - a.trackCount);
-
     const filteredArtists = eligibleArtists.filter(a => a.name.toLowerCase().includes(searchVal));
 
     if (filteredArtists.length === 0) {
         grid.innerHTML = `<div class="col-span-full py-8 text-center text-xs text-zinc-500">Nenhum artista elegível encontrado com a busca.</div>`;
         return;
     }
+
+    const statePriority = { approved: 0, neutral: 1, banned: 2 };
+    filteredArtists.sort((a, b) => {
+        const stA = statePriority[pb.artistStates[a.id] || 'neutral'];
+        const stB = statePriority[pb.artistStates[b.id] || 'neutral'];
+        if (stA !== stB) return stA - stB;
+        if (b.trackCount !== a.trackCount) return b.trackCount - a.trackCount;
+        return a.name.localeCompare(b.name);
+    });
 
     grid.innerHTML = filteredArtists.map(artist => {
         const st = pb.artistStates[artist.id] || 'neutral';
@@ -1730,7 +1857,7 @@ function renderPBArtists() {
                     <img src="${avatarUrl}" class="h-10 w-10 rounded-full object-cover border border-zinc-800 flex-shrink-0" alt="${artist.name}">
                     <div class="min-w-0">
                         <p class="text-sm font-bold text-white truncate">${artist.name}</p>
-                        <span class="text-[11px] text-zinc-400">${artist.trackCount} ${artist.trackCount === 1 ? 'faixa' : 'faixas'}</span>
+                        <span class="text-[11px] text-zinc-400">${artist.trackCount} ${artist.trackCount === 1 ? 'música' : 'músicas'}</span>
                     </div>
                 </div>
 
