@@ -180,7 +180,7 @@
         </div>
     </div>
 
-    <!-- Modal de Alerta Duração Insuficiente (Criador de Playlists) -->
+    <!-- Modal de Alerta Duração Insuficiente / Reduzida (Criador de Playlists) -->
     <div id="modal-pb-alert" class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 hidden backdrop-blur-sm">
         <div class="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-center">
             <div class="h-12 w-12 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto border border-amber-500/30">
@@ -189,14 +189,17 @@
                 </svg>
             </div>
             
-            <h3 class="text-lg font-bold text-white">Duração Insuficiente</h3>
+            <h3 class="text-lg font-bold text-white">Tempo Alvo Inalcançável</h3>
             <p id="pb-alert-message" class="text-xs text-zinc-300 leading-relaxed">
-                Você classificou todos os artistas, porém a duração acumulada ainda está abaixo do tempo mínimo necessário para a playlist. É necessário incluir mais gêneros.
+                Mesmo se você aprovar todos os itens restantes, o tempo máximo acumulável é inferior ao tempo alvo. Você aceita criar a playlist com uma duração menor?
             </p>
 
-            <div class="pt-2">
-                <button onclick="confirmPBAlertRedirect()" class="w-full py-3 bg-[#1DB954] hover:bg-[#1ed760] text-black font-extrabold text-xs rounded-full shadow transition transform hover:scale-105 active:scale-95 duration-200 cursor-pointer">
-                    OK - INCLUIR MAIS GÊNEROS
+            <div class="flex flex-col space-y-2 pt-2">
+                <button onclick="confirmAcceptReducedTarget()" class="w-full py-3 bg-[#1DB954] hover:bg-[#1ed760] text-black font-extrabold text-xs rounded-full shadow transition transform hover:scale-105 active:scale-95 duration-200 cursor-pointer">
+                    ✓ SIM, ACEITO TEMPO MENOR
+                </button>
+                <button id="pb-btn-alert-secondary" onclick="confirmAdjustTargetOrGenres()" class="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs rounded-full border border-zinc-700 transition cursor-pointer">
+                    ⚙️ AJUSTAR TEMPO ALVO
                 </button>
             </div>
         </div>
@@ -576,7 +579,9 @@ const state = {
         targetMinMinutes: 60,
         genreStates: {},
         artistStates: {},
-        userPlaylists: []
+        userPlaylists: [],
+        allowReducedTarget: false,
+        alertShownForStep: { 2: false, 3: false }
     }
 };
 
@@ -908,6 +913,7 @@ async function fetchArtistsDetails(artistIds) {
 
 const CACHE_KEY_TRACKS = 'cache_saved_tracks';
 const CACHE_KEY_ARTISTS_MAP = 'cache_artists_map';
+const CACHE_KEY_FOLLOWED = 'cache_followed_artists';
 const CACHE_KEY_TIMESTAMP = 'cache_saved_tracks_ts';
 const CACHE_DURATION_MS = 2 * 60 * 60 * 1000; // 2 horas em milissegundos
 
@@ -915,6 +921,7 @@ async function forceRefreshSavedTracks() {
     try {
         localStorage.removeItem(CACHE_KEY_TRACKS);
         localStorage.removeItem(CACHE_KEY_ARTISTS_MAP);
+        localStorage.removeItem(CACHE_KEY_FOLLOWED);
         localStorage.removeItem(CACHE_KEY_TIMESTAMP);
     } catch(e) {}
     
@@ -966,25 +973,29 @@ async function loadSpotifyData(forceRefresh = false) {
 
     let tracks = null;
     let artistsMap = null;
+    let followed = null;
 
     if (isCacheValid) {
         try {
-            updateProgress("Carregando do cache...", "Recuperando músicas salvas nas últimas 2 horas...", 50);
+            updateProgress("Carregando do cache...", "Recuperando músicas salvas e artistas seguidos das últimas 2 horas...", 50);
             const rawTracks = localStorage.getItem(CACHE_KEY_TRACKS);
             const rawArtists = localStorage.getItem(CACHE_KEY_ARTISTS_MAP);
-            if (rawTracks && rawArtists) {
+            const rawFollowed = localStorage.getItem(CACHE_KEY_FOLLOWED);
+            if (rawTracks && rawArtists && rawFollowed) {
                 tracks = JSON.parse(rawTracks);
                 artistsMap = JSON.parse(rawArtists);
+                followed = JSON.parse(rawFollowed);
             }
         } catch(e) {
             console.warn("Falha ao ler dados do cache local:", e);
             tracks = null;
             artistsMap = null;
+            followed = null;
         }
     }
 
-    if (!tracks || !artistsMap) {
-        updateProgress("Buscando biblioteca...", "Baixando lista de faixas salvas do Spotify...", 10);
+    if (!tracks || !artistsMap || !followed) {
+        updateProgress("Buscando biblioteca...", "Baixando faixas salvas e artistas seguidos do Spotify...", 10);
         tracks = await fetchAllSavedTracks();
         
         const uniqueArtistIds = new Set();
@@ -997,17 +1008,17 @@ async function loadSpotifyData(forceRefresh = false) {
         });
 
         artistsMap = await fetchArtistsDetails(uniqueArtistIds);
+        followed = await fetchAllFollowedArtists();
 
         try {
             localStorage.setItem(CACHE_KEY_TRACKS, JSON.stringify(tracks));
             localStorage.setItem(CACHE_KEY_ARTISTS_MAP, JSON.stringify(artistsMap));
+            localStorage.setItem(CACHE_KEY_FOLLOWED, JSON.stringify(followed));
             localStorage.setItem(CACHE_KEY_TIMESTAMP, Date.now().toString());
         } catch(e) {
             console.warn("Aviso: Limite de armazenamento local excedido. O cache não pôde ser salvo em disco.", e);
         }
     }
-
-    const followed = await fetchAllFollowedArtists();
 
     state.savedTracks = tracks;
     state.followedArtists = followed;
@@ -1587,11 +1598,123 @@ function formatMinutesToHoursMin(totalMins) {
     return `${hrs}h ${mins.toString().padStart(2, '0')}m`;
 }
 
+function getPotentialMaxTrackInfo() {
+    const pb = state.playlistBuilder;
+    
+    const bannedGenres = new Set(Object.keys(pb.genreStates).filter(g => pb.genreStates[g] === 'banned'));
+    const approvedGenres = new Set(Object.keys(pb.genreStates).filter(g => pb.genreStates[g] === 'approved'));
+
+    const bannedArtistIdsByGenre = new Set();
+    Object.keys(state.artistsMap).forEach(artistId => {
+        const artist = state.artistsMap[artistId];
+        if (artist && artist.genres) {
+            const hasBannedGenre = artist.genres.some(g => bannedGenres.has(g));
+            if (hasBannedGenre) {
+                bannedArtistIdsByGenre.add(artistId);
+            }
+        }
+    });
+
+    const bannedArtists = new Set(Object.keys(pb.artistStates).filter(a => pb.artistStates[a] === 'banned'));
+
+    const eligibleGenresForPotential = (pb.step === 2) 
+        ? new Set(state.genreFrequencies.map(g => g.name).filter(g => pb.genreStates[g] !== 'banned'))
+        : approvedGenres;
+
+    if (eligibleGenresForPotential.size === 0) {
+        return { potentialTracks: [], potentialMaxMs: 0, count: 0 };
+    }
+
+    const allowedArtistIdsForPotential = new Set();
+    Object.keys(state.artistsMap).forEach(artistId => {
+        const artist = state.artistsMap[artistId];
+        if (artist && artist.genres && !bannedArtistIdsByGenre.has(artistId)) {
+            const hasEligibleGenre = artist.genres.some(g => eligibleGenresForPotential.has(g));
+            if (hasEligibleGenre) {
+                allowedArtistIdsForPotential.add(artistId);
+            }
+        }
+    });
+
+    const potentialTracks = state.savedTracks.filter(item => {
+        if (!item || !item.track) return false;
+        const track = item.track;
+
+        if (!pb.allowExplicit && track.explicit) return false;
+        if (!track.artists || track.artists.length === 0) return false;
+
+        const hasAnyBannedArtist = track.artists.some(a => 
+            bannedArtists.has(a.id) || bannedArtistIdsByGenre.has(a.id)
+        );
+        if (hasAnyBannedArtist) return false;
+
+        const hasArtistWithEligibleGenre = track.artists.some(a => allowedArtistIdsForPotential.has(a.id));
+        if (!hasArtistWithEligibleGenre) return false;
+
+        if (pb.step === 3) {
+            const hasNonBannedArtist = track.artists.some(a => pb.artistStates[a.id] !== 'banned');
+            if (!hasNonBannedArtist) return false;
+        }
+
+        return true;
+    });
+
+    const potentialMaxMs = potentialTracks.reduce((acc, item) => acc + (item.track ? (item.track.duration_ms || 0) : 0), 0);
+
+    return {
+        potentialTracks: potentialTracks,
+        potentialMaxMs: potentialMaxMs,
+        count: potentialTracks.length
+    };
+}
+
+function checkEarlyInsufficientWarning() {
+    const pb = state.playlistBuilder;
+    if (pb.step === 1 || pb.allowReducedTarget) return;
+
+    const { potentialMaxMs } = getPotentialMaxTrackInfo();
+    const targetMs = (pb.targetMinMinutes || 60) * 60 * 1000;
+
+    if (potentialMaxMs < targetMs && !pb.alertShownForStep[pb.step]) {
+        pb.alertShownForStep[pb.step] = true;
+        
+        const potentialFormatted = formatMsToHuman(potentialMaxMs);
+        const targetFormatted = formatMinutesToHoursMin(pb.targetMinMinutes);
+        const stepName = pb.step === 2 ? 'gêneros' : 'artistas';
+
+        const btnSecondary = document.getElementById('pb-btn-alert-secondary');
+        if (btnSecondary) {
+            btnSecondary.innerText = pb.step === 3 ? "🎵 INCLUIR MAIS GÊNEROS" : "⚙️ AJUSTAR TEMPO ALVO";
+        }
+
+        showPBAlert(`Mesmo se você aprovar todos os ${stepName} restantes, o tempo máximo acumulável (${potentialFormatted}) é inferior ao tempo alvo estipulado (${targetFormatted}). Você aceita criar a playlist com uma duração menor?`);
+    }
+}
+
+function confirmAcceptReducedTarget() {
+    state.playlistBuilder.allowReducedTarget = true;
+    const modal = document.getElementById('modal-pb-alert');
+    if (modal) modal.classList.add('hidden');
+    showToast("Permissão concedida para criar a playlist com tempo menor!", "success");
+    updatePlaylistBuilderUI();
+}
+
+function confirmAdjustTargetOrGenres() {
+    const modal = document.getElementById('modal-pb-alert');
+    if (modal) modal.classList.add('hidden');
+    if (state.playlistBuilder.step === 3) {
+        setPBStep(2);
+    } else {
+        setPBStep(1);
+    }
+}
+
 function updatePlaylistBuilderUI() {
     const pb = state.playlistBuilder;
     const { totalDurationMs, count } = getEligibleTracks();
     const targetMs = (pb.targetMinMinutes || 60) * 60 * 1000;
     const isTargetReached = totalDurationMs >= targetMs;
+    const isAllowedToAdvance = isTargetReached || pb.allowReducedTarget;
 
     const currentMinText = formatMsToHuman(totalDurationMs);
     const targetMinText = formatMinutesToHoursMin(pb.targetMinMinutes);
@@ -1622,6 +1745,13 @@ function updatePlaylistBuilderUI() {
             statusBadge.innerText = "Tempo Mínimo Atingido ✓";
         }
         if (statusIcon) statusIcon.className = "h-12 w-12 rounded-2xl bg-[#1DB954]/10 border border-[#1DB954]/30 flex items-center justify-center text-[#1DB954] flex-shrink-0";
+    } else if (pb.allowReducedTarget) {
+        if (fillEl) fillEl.className = "h-full bg-amber-500 rounded-full transition-all duration-300";
+        if (statusBadge) {
+            statusBadge.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30";
+            statusBadge.innerText = "Tempo Reduzido Aceito ⚠️";
+        }
+        if (statusIcon) statusIcon.className = "h-12 w-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 flex-shrink-0";
     } else {
         if (fillEl) fillEl.className = "h-full bg-amber-500 rounded-full transition-all duration-300";
         if (statusBadge) {
@@ -1636,7 +1766,7 @@ function updatePlaylistBuilderUI() {
             actionBtn.className = "w-full md:w-auto px-6 py-3 bg-[#1DB954] hover:bg-[#1ed760] text-black font-extrabold text-xs rounded-full shadow transition transform hover:scale-105 active:scale-95 duration-200 cursor-pointer";
             actionBtn.innerText = "AVANÇAR PARA GÊNEROS →";
         } else if (pb.step === 2) {
-            if (isTargetReached) {
+            if (isAllowedToAdvance) {
                 actionBtn.className = "w-full md:w-auto px-6 py-3 bg-[#1DB954] hover:bg-[#1ed760] text-black font-extrabold text-xs rounded-full shadow transition transform hover:scale-105 active:scale-95 duration-200 cursor-pointer";
                 actionBtn.innerText = "AVANÇAR PARA ARTISTAS →";
             } else {
@@ -1644,7 +1774,7 @@ function updatePlaylistBuilderUI() {
                 actionBtn.innerText = "ADICIONE MAIS GÊNEROS PARA AVANÇAR";
             }
         } else if (pb.step === 3) {
-            if (isTargetReached) {
+            if (isAllowedToAdvance) {
                 actionBtn.className = "w-full md:w-auto px-6 py-3 bg-[#1DB954] hover:bg-[#1ed760] text-black font-extrabold text-xs rounded-full shadow transition transform hover:scale-105 active:scale-95 duration-200 cursor-pointer";
                 actionBtn.innerText = "CONFIRMAR & SALVAR PLAYLIST 🎉";
             } else {
@@ -1677,6 +1807,8 @@ function updatePlaylistBuilderUI() {
 
     if (pb.step === 2) renderPBGenres();
     if (pb.step === 3) renderPBArtists();
+
+    checkEarlyInsufficientWarning();
 }
 
 function setPBStep(stepNum) {
@@ -1684,7 +1816,7 @@ function setPBStep(stepNum) {
     const targetMs = (state.playlistBuilder.targetMinMinutes || 60) * 60 * 1000;
     const targetFormatted = formatMinutesToHoursMin(state.playlistBuilder.targetMinMinutes);
 
-    if (stepNum > 1 && totalDurationMs < targetMs && stepNum > state.playlistBuilder.step) {
+    if (stepNum > 1 && totalDurationMs < targetMs && !state.playlistBuilder.allowReducedTarget && stepNum > state.playlistBuilder.step) {
         showToast(`Atingição necessária: selecione mais músicas para somar pelo menos ${targetFormatted}.`, "warning");
         return;
     }
@@ -1715,14 +1847,14 @@ function advancePBStep() {
         pb.step = 2;
         updatePlaylistBuilderUI();
     } else if (pb.step === 2) {
-        if (totalDurationMs >= targetMs) {
+        if (totalDurationMs >= targetMs || pb.allowReducedTarget) {
             pb.step = 3;
             updatePlaylistBuilderUI();
         } else {
             showToast(`A duração atual é inferior ao tempo mínimo (${targetFormatted}). Selecione mais gêneros.`, "warning");
         }
     } else if (pb.step === 3) {
-        if (totalDurationMs >= targetMs) {
+        if (totalDurationMs >= targetMs || pb.allowReducedTarget) {
             openSavePlaylistModal();
         } else {
             const currentMin = formatMsToHuman(totalDurationMs);
@@ -1748,6 +1880,8 @@ function updatePBConfig() {
     if (totalMinutes < 1) totalMinutes = 1;
 
     state.playlistBuilder.targetMinMinutes = totalMinutes;
+    state.playlistBuilder.allowReducedTarget = false;
+    state.playlistBuilder.alertShownForStep = { 2: false, 3: false };
 
     const previewEl = document.getElementById('pb-target-formatted-preview');
     if (previewEl) previewEl.innerText = formatMinutesToHoursMin(totalMinutes);
@@ -1767,6 +1901,8 @@ function resetPlaylistBuilder() {
     state.playlistBuilder.genreStates = {};
     state.playlistBuilder.artistStates = {};
     state.playlistBuilder.step = 1;
+    state.playlistBuilder.allowReducedTarget = false;
+    state.playlistBuilder.alertShownForStep = { 2: false, 3: false };
     updatePlaylistBuilderUI();
     showToast("Filtros do criador de playlists resetados!", "info");
 }
@@ -1778,15 +1914,54 @@ function renderPBGenres() {
     const searchVal = (document.getElementById('pb-search-genre')?.value || '').toLowerCase().trim();
     const pb = state.playlistBuilder;
 
-    // Calcular contagem de artistas únicos por gênero
-    const genreArtistCounts = {};
-    Object.values(state.artistsMap).forEach(artist => {
+    // 1. Identificar gêneros e artistas atualmente banidos
+    const bannedGenres = new Set(Object.keys(pb.genreStates).filter(g => pb.genreStates[g] === 'banned'));
+    const bannedArtists = new Set(Object.keys(pb.artistStates).filter(a => pb.artistStates[a] === 'banned'));
+
+    const bannedArtistIdsByGenre = new Set();
+    Object.keys(state.artistsMap).forEach(artistId => {
+        const artist = state.artistsMap[artistId];
         if (artist && artist.genres) {
-            artist.genres.forEach(g => {
-                if (!genreArtistCounts[g]) genreArtistCounts[g] = new Set();
-                genreArtistCounts[g].add(artist.id);
-            });
+            const hasBannedGenre = artist.genres.some(g => bannedGenres.has(g));
+            if (hasBannedGenre) {
+                bannedArtistIdsByGenre.add(artistId);
+            }
         }
+    });
+
+    // 2. Calcular a contagem dinâmica de faixas NÃO-DESQUALIFICADAS para cada gênero
+    const dynamicGenreCounts = {};
+    const genreArtistCounts = {};
+
+    state.savedTracks.forEach(item => {
+        if (!item || !item.track) return;
+        const track = item.track;
+
+        if (!pb.allowExplicit && track.explicit) return;
+        if (!track.artists || track.artists.length === 0) return;
+
+        // Se a música possui qualquer artista banido ou artista com gênero banido -> desqualificada
+        const isDisqualified = track.artists.some(a => 
+            bannedArtists.has(a.id) || bannedArtistIdsByGenre.has(a.id)
+        );
+        if (isDisqualified) return;
+
+        // Para cada artista da música não-desqualificada, incrementar os gêneros correspondentes
+        const trackGenres = new Set();
+        track.artists.forEach(simplifiedArtist => {
+            const fullArtist = state.artistsMap[simplifiedArtist.id];
+            if (fullArtist && fullArtist.genres) {
+                fullArtist.genres.forEach(g => {
+                    trackGenres.add(g);
+                    if (!genreArtistCounts[g]) genreArtistCounts[g] = new Set();
+                    genreArtistCounts[g].add(fullArtist.id);
+                });
+            }
+        });
+
+        trackGenres.forEach(g => {
+            dynamicGenreCounts[g] = (dynamicGenreCounts[g] || 0) + 1;
+        });
     });
 
     const allGenres = state.genreFrequencies.filter(g => !state.hiddenGenres.has(g.name));
@@ -1802,27 +1977,33 @@ function renderPBGenres() {
         const stA = statePriority[pb.genreStates[a.name] || 'neutral'];
         const stB = statePriority[pb.genreStates[b.name] || 'neutral'];
         if (stA !== stB) return stA - stB;
-        if (b.count !== a.count) return b.count - a.count;
+
+        const countA = dynamicGenreCounts[a.name] || 0;
+        const countB = dynamicGenreCounts[b.name] || 0;
+        if (countB !== countA) return countB - countA;
+
         const artCountA = genreArtistCounts[a.name] ? genreArtistCounts[a.name].size : 0;
         const artCountB = genreArtistCounts[b.name] ? genreArtistCounts[b.name].size : 0;
         if (artCountB !== artCountA) return artCountB - artCountA;
+
         return a.name.localeCompare(b.name);
     });
 
     grid.innerHTML = filteredGenres.map(item => {
         const st = pb.genreStates[item.name] || 'neutral';
+        const dynamicCount = dynamicGenreCounts[item.name] || 0;
         const artCount = genreArtistCounts[item.name] ? genreArtistCounts[item.name].size : 0;
         
         let cardBg = "bg-zinc-950/60 border-zinc-800/80";
         if (st === 'approved') cardBg = "bg-emerald-950/30 border-emerald-500/50 ring-1 ring-emerald-500/30";
-        if (st === 'banned') cardBg = "bg-red-950/30 border-red-500/50 ring-1 ring-red-500/30";
+        if (st === 'banned') cardBg = "bg-red-950/30 border-red-500/50 ring-1 ring-red-500/30 opacity-60";
 
         return `
             <div class="${cardBg} border rounded-xl p-3.5 flex flex-col justify-between space-y-3 transition">
                 <div class="flex items-start justify-between">
                     <div class="min-w-0 pr-2">
                         <p class="text-sm font-bold text-white capitalize truncate">${item.name}</p>
-                        <span class="text-[11px] text-zinc-400">${item.count} ${item.count === 1 ? 'música' : 'músicas'} • ${artCount} ${artCount === 1 ? 'artista' : 'artistas'}</span>
+                        <span class="text-[11px] text-zinc-400">${dynamicCount} ${dynamicCount === 1 ? 'música elegível' : 'músicas elegíveis'} • ${artCount} ${artCount === 1 ? 'artista' : 'artistas'}</span>
                     </div>
                 </div>
 
