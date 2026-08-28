@@ -777,30 +777,68 @@ function logout() {
     showLoginMode();
 }
 
-async function spotifyFetch(url) {
+const CACHE_PREFIX = 'api_cache_';
+const CACHE_KEY_TRACKS = 'cache_saved_tracks';
+const CACHE_KEY_ARTISTS_MAP = 'cache_artists_map';
+const CACHE_KEY_FOLLOWED = 'cache_followed_artists';
+const CACHE_KEY_TIMESTAMP = 'cache_saved_tracks_ts';
+const CACHE_DURATION_MS = 2 * 60 * 60 * 1000; // 2 horas em milissegundos
+
+function clearAllApiCache() {
     try {
-        // Verifica se precisa de refresh antes de chamar
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && (key.startsWith('api_cache_') || key.startsWith('cache_'))) {
+                keysToRemove.push(key);
+            }
+        }
+        keysToRemove.forEach(k => localStorage.removeItem(k));
+    } catch(e) {
+        console.warn("Erro ao limpar cache local:", e);
+    }
+}
+
+async function spotifyFetch(url, options = {}, forceRefresh = false) {
+    try {
+        const method = (options.method || 'GET').toUpperCase();
+        const isGet = (method === 'GET');
+
+        let cacheKey = '';
+        if (isGet) {
+            try {
+                cacheKey = CACHE_PREFIX + btoa(url).replace(/=/g, '');
+                if (!forceRefresh) {
+                    const cachedRaw = localStorage.getItem(cacheKey);
+                    if (cachedRaw) {
+                        const cachedObj = JSON.parse(cachedRaw);
+                        if (cachedObj && cachedObj.timestamp && (Date.now() - cachedObj.timestamp < CACHE_DURATION_MS)) {
+                            return cachedObj.data;
+                        }
+                    }
+                }
+            } catch(e) {
+                console.warn("Aviso ao ler cache da API para URL:", url, e);
+            }
+        }
+
         if (localStorage.getItem('spotify_refresh_token') && Date.now() >= (state.tokenExpiresAt - 60000)) {
             await refreshAccessToken();
         }
 
-        let res = await fetch(url, {
-            headers: {
-                'Authorization': `Bearer ${state.accessToken}`,
-                'Accept-Language': 'en'
-            }
-        });
+        const headers = {
+            'Authorization': `Bearer ${state.accessToken}`,
+            'Accept-Language': 'en',
+            ...(options.headers || {})
+        };
 
-        // Caso dê 401, tenta renovar o token e tentar de novo uma vez
+        let res = await fetch(url, { ...options, headers });
+
         if (res.status === 401 && localStorage.getItem('spotify_refresh_token')) {
             const refreshed = await refreshAccessToken();
             if (refreshed) {
-                res = await fetch(url, {
-                    headers: {
-                        'Authorization': `Bearer ${state.accessToken}`,
-                        'Accept-Language': 'en'
-                    }
-                });
+                headers['Authorization'] = `Bearer ${state.accessToken}`;
+                res = await fetch(url, { ...options, headers });
             } else {
                 showToast("Sua sessão do Spotify expirou.", "error");
                 logout();
@@ -812,7 +850,7 @@ async function spotifyFetch(url) {
             showToast("Atingido limite de requisições. Aguardando...", "warning");
             const retryAfter = res.headers.get('Retry-After') || 5;
             await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
-            return spotifyFetch(url);
+            return spotifyFetch(url, options, forceRefresh);
         }
 
         if (!res.ok) {
@@ -821,7 +859,20 @@ async function spotifyFetch(url) {
 
         if (res.status === 204) return true;
 
-        return await res.json();
+        const data = await res.json();
+
+        if (isGet && cacheKey && data) {
+            try {
+                localStorage.setItem(cacheKey, JSON.stringify({
+                    timestamp: Date.now(),
+                    data: data
+                }));
+            } catch(e) {
+                console.warn("Aviso: Limite do localStorage atingido para cache de API.", e);
+            }
+        }
+
+        return data;
     } catch(err) {
         console.error("Erro na chamada:", err);
         return null;
@@ -837,7 +888,7 @@ function updateProgress(statusText, detailText, percent) {
     }
 }
 
-async function fetchAllSavedTracks() {
+async function fetchAllSavedTracks(forceRefresh = false) {
     let tracks = [];
     let url = 'https://api.spotify.com/v1/me/tracks?limit=50';
     let hasNext = true;
@@ -845,7 +896,7 @@ async function fetchAllSavedTracks() {
     updateProgress("Vasculhando músicas salvas...", "Buscando faixas...", 10);
 
     while (url && hasNext) {
-        const data = await spotifyFetch(url);
+        const data = await spotifyFetch(url, {}, forceRefresh);
         if (!data || !data.items) break;
 
         tracks = tracks.concat(data.items);
@@ -861,7 +912,7 @@ async function fetchAllSavedTracks() {
     return tracks;
 }
 
-async function fetchAllFollowedArtists() {
+async function fetchAllFollowedArtists(forceRefresh = false) {
     let artists = [];
     let url = 'https://api.spotify.com/v1/me/following?type=artist&limit=50';
     let hasNext = true;
@@ -869,7 +920,7 @@ async function fetchAllFollowedArtists() {
     updateProgress("Buscando artistas seguidos...", "Lendo favoritos...", 50);
 
     while (url && hasNext) {
-        const data = await spotifyFetch(url);
+        const data = await spotifyFetch(url, {}, forceRefresh);
         if (!data || !data.artists) break;
 
         artists = artists.concat(data.artists.items);
@@ -885,7 +936,7 @@ async function fetchAllFollowedArtists() {
     return artists;
 }
 
-async function fetchArtistsDetails(artistIds) {
+async function fetchArtistsDetails(artistIds, forceRefresh = false) {
     const artistDetails = {};
     const idsArray = Array.from(artistIds);
     const batchSize = 50;
@@ -895,7 +946,7 @@ async function fetchArtistsDetails(artistIds) {
     for (let i = 0; i < idsArray.length; i += batchSize) {
         const chunk = idsArray.slice(i, i + batchSize);
         const url = `https://api.spotify.com/v1/artists?ids=${chunk.join(',')}`;
-        const data = await spotifyFetch(url);
+        const data = await spotifyFetch(url, {}, forceRefresh);
 
         if (data && data.artists) {
             data.artists.forEach(artist => {
@@ -911,20 +962,8 @@ async function fetchArtistsDetails(artistIds) {
     return artistDetails;
 }
 
-const CACHE_KEY_TRACKS = 'cache_saved_tracks';
-const CACHE_KEY_ARTISTS_MAP = 'cache_artists_map';
-const CACHE_KEY_FOLLOWED = 'cache_followed_artists';
-const CACHE_KEY_TIMESTAMP = 'cache_saved_tracks_ts';
-const CACHE_DURATION_MS = 2 * 60 * 60 * 1000; // 2 horas em milissegundos
-
 async function forceRefreshSavedTracks() {
-    try {
-        localStorage.removeItem(CACHE_KEY_TRACKS);
-        localStorage.removeItem(CACHE_KEY_ARTISTS_MAP);
-        localStorage.removeItem(CACHE_KEY_FOLLOWED);
-        localStorage.removeItem(CACHE_KEY_TIMESTAMP);
-    } catch(e) {}
-    
+    clearAllApiCache();
     showToast("Solicitando sincronização completa com o Spotify...", "info");
     await loadSpotifyData(true);
 }
@@ -957,7 +996,7 @@ function updateCacheStatusUI() {
 async function loadSpotifyData(forceRefresh = false) {
     showLoadingMode();
 
-    const profile = await spotifyFetch('https://api.spotify.com/v1/me');
+    const profile = await spotifyFetch('https://api.spotify.com/v1/me', {}, forceRefresh);
     if (profile) {
         state.userProfile = profile;
         document.getElementById('user-profile-container').classList.remove('hidden');
@@ -996,19 +1035,43 @@ async function loadSpotifyData(forceRefresh = false) {
 
     if (!tracks || !artistsMap || !followed) {
         updateProgress("Buscando biblioteca...", "Baixando faixas salvas e artistas seguidos do Spotify...", 10);
-        tracks = await fetchAllSavedTracks();
         
-        const uniqueArtistIds = new Set();
+        // Baixar faixas salvas e artistas seguidos em paralelo
+        const [fetchedTracks, fetchedFollowed] = await Promise.all([
+            fetchAllSavedTracks(forceRefresh),
+            fetchAllFollowedArtists(forceRefresh)
+        ]);
+
+        tracks = fetchedTracks;
+        followed = fetchedFollowed;
+
+        // Pré-preencher o mapa de artistas com os seguidos (que já possuem metadados e gêneros)
+        artistsMap = {};
+        if (followed && Array.isArray(followed)) {
+            followed.forEach(artist => {
+                if (artist && artist.id) {
+                    artistsMap[artist.id] = artist;
+                }
+            });
+        }
+        
+        // Identificar quais artistas das faixas salvas ainda não estão mapeados
+        const missingArtistIds = new Set();
         tracks.forEach(item => {
             if (item.track && item.track.artists) {
                 item.track.artists.forEach(artist => {
-                    uniqueArtistIds.add(artist.id);
+                    if (artist && artist.id && !artistsMap[artist.id]) {
+                        missingArtistIds.add(artist.id);
+                    }
                 });
             }
         });
 
-        artistsMap = await fetchArtistsDetails(uniqueArtistIds);
-        followed = await fetchAllFollowedArtists();
+        // Buscar dados na API apenas para os artistas faltantes
+        if (missingArtistIds.size > 0) {
+            const additionalMap = await fetchArtistsDetails(missingArtistIds, forceRefresh);
+            Object.assign(artistsMap, additionalMap);
+        }
 
         try {
             localStorage.setItem(CACHE_KEY_TRACKS, JSON.stringify(tracks));
