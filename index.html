@@ -48,10 +48,11 @@
                 <div id="cache-info-badge" class="hidden items-center space-x-2 bg-zinc-950 border border-zinc-800 rounded-full px-3 py-1 text-xs">
                     <span class="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse" id="cache-dot"></span>
                     <span id="cache-status-text" class="text-zinc-400 font-medium">Cache ativo</span>
-                    <button id="btn-force-refresh" onclick="forceRefreshSavedTracks()" class="ml-1 p-1 hover:bg-zinc-800 rounded-full text-zinc-400 hover:text-emerald-400 transition cursor-pointer" title="Forçar Atualização Completa do Spotify (Ignorar Cache de 2 Horas)">
-                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 15H16.5m0 0v4.5" />
+                    <button id="btn-force-refresh" onclick="forceRefreshSavedTracks()" class="ml-1.5 px-2 py-0.5 bg-zinc-800 hover:bg-[#1DB954] text-zinc-300 hover:text-black rounded-full font-bold text-[10px] transition-all flex items-center space-x-1 cursor-pointer" title="Forçar Atualização Completa do Spotify (Ignorar Cache de 2 Horas)">
+                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 104.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
+                        <span>Atualizar</span>
                     </button>
                 </div>
 
@@ -174,6 +175,28 @@
                 <button id="btn-cancel-save-modal" class="px-5 py-2.5 text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-full transition">Cancelar</button>
                 <button id="btn-confirm-save-modal" onclick="executeSavePlaylist()" class="px-6 py-2.5 text-xs font-extrabold bg-[#1DB954] hover:bg-[#1ed760] text-black rounded-full shadow transition transform hover:scale-105 active:scale-95 duration-200">
                     SALVAR NO SPOTIFY
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Alerta Duração Insuficiente (Criador de Playlists) -->
+    <div id="modal-pb-alert" class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 hidden backdrop-blur-sm">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-center">
+            <div class="h-12 w-12 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto border border-amber-500/30">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+            
+            <h3 class="text-lg font-bold text-white">Duração Insuficiente</h3>
+            <p id="pb-alert-message" class="text-xs text-zinc-300 leading-relaxed">
+                Você classificou todos os artistas, porém a duração acumulada ainda está abaixo do tempo mínimo necessário para a playlist. É necessário incluir mais gêneros.
+            </p>
+
+            <div class="pt-2">
+                <button onclick="confirmPBAlertRedirect()" class="w-full py-3 bg-[#1DB954] hover:bg-[#1ed760] text-black font-extrabold text-xs rounded-full shadow transition transform hover:scale-105 active:scale-95 duration-200 cursor-pointer">
+                    OK - INCLUIR MAIS GÊNEROS
                 </button>
             </div>
         </div>
@@ -429,24 +452,30 @@
 
                         <!-- Tempo Alvo Mínimo -->
                         <div class="bg-zinc-950 p-5 rounded-xl border border-zinc-800/80 space-y-3">
-                            <label class="block text-xs font-bold text-zinc-300 uppercase tracking-wider">Tempo Alvo Mínimo (Minutos)</label>
-                            <p class="text-xs text-zinc-400">Defina a quantidade mínima em minutos de música que você quer ter na playlist.</p>
+                            <label class="block text-xs font-bold text-zinc-300 uppercase tracking-wider">Tempo Alvo Mínimo (Horas : Minutos)</label>
+                            <p class="text-xs text-zinc-400">Defina o tempo mínimo desejado para a playlist em horas e minutos.</p>
                             
                             <div class="flex items-center space-x-3 pt-2">
-                                <input type="number" id="pb-input-min-minutes" value="60" min="1" max="1440" oninput="updatePBConfig()" class="w-32 bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-base font-bold text-white focus:outline-none focus:ring-2 focus:ring-[#1DB954]">
-                                <span class="text-sm font-semibold text-zinc-400">minutos</span>
+                                <div class="flex items-center space-x-2 bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2">
+                                    <input type="number" id="pb-input-hours" value="1" min="0" max="24" oninput="updatePBConfig()" class="w-12 bg-transparent text-lg font-extrabold text-white text-center focus:outline-none">
+                                    <span class="text-xs font-bold text-zinc-400">h</span>
+                                    <span class="text-zinc-600 font-bold text-lg">:</span>
+                                    <input type="number" id="pb-input-minutes" value="0" min="0" max="59" step="5" oninput="updatePBConfig()" class="w-12 bg-transparent text-lg font-extrabold text-white text-center focus:outline-none">
+                                    <span class="text-xs font-bold text-zinc-400">m</span>
+                                </div>
+                                <span id="pb-target-formatted-preview" class="text-xs font-extrabold text-[#1DB954] bg-[#1DB954]/10 border border-[#1DB954]/30 px-3.5 py-2.5 rounded-xl">01h 00m</span>
                             </div>
 
                             <!-- Preset Pills -->
                             <div class="pt-2">
                                 <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block mb-1.5">Atalhos rápidos:</span>
                                 <div class="flex flex-wrap gap-2">
-                                    <button onclick="setPBTargetMinutes(15)" class="px-3 py-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs rounded-full border border-zinc-800 font-medium transition">15 min</button>
-                                    <button onclick="setPBTargetMinutes(30)" class="px-3 py-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs rounded-full border border-zinc-800 font-medium transition">30 min</button>
-                                    <button onclick="setPBTargetMinutes(45)" class="px-3 py-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs rounded-full border border-zinc-800 font-medium transition">45 min</button>
-                                    <button onclick="setPBTargetMinutes(60)" class="px-3 py-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs rounded-full border border-zinc-800 font-medium transition">60 min (1h)</button>
-                                    <button onclick="setPBTargetMinutes(90)" class="px-3 py-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs rounded-full border border-zinc-800 font-medium transition">90 min (1h30)</button>
-                                    <button onclick="setPBTargetMinutes(120)" class="px-3 py-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs rounded-full border border-zinc-800 font-medium transition">120 min (2h)</button>
+                                    <button onclick="setPBTargetTime(0, 30)" class="px-3 py-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs rounded-full border border-zinc-800 font-medium transition">0h 30m</button>
+                                    <button onclick="setPBTargetTime(1, 0)" class="px-3 py-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs rounded-full border border-zinc-800 font-medium transition">1h 00m</button>
+                                    <button onclick="setPBTargetTime(1, 30)" class="px-3 py-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs rounded-full border border-zinc-800 font-medium transition">1h 30m</button>
+                                    <button onclick="setPBTargetTime(2, 0)" class="px-3 py-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs rounded-full border border-zinc-800 font-medium transition">2h 00m</button>
+                                    <button onclick="setPBTargetTime(3, 0)" class="px-3 py-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs rounded-full border border-zinc-800 font-medium transition">3h 00m</button>
+                                    <button onclick="setPBTargetTime(4, 0)" class="px-3 py-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs rounded-full border border-zinc-800 font-medium transition">4h 00m</button>
                                 </div>
                             </div>
                         </div>
@@ -1549,6 +1578,15 @@ function getEligibleTracks() {
     };
 }
 
+function formatMinutesToHoursMin(totalMins) {
+    if (!totalMins || totalMins <= 0) return '0m';
+    const hrs = Math.floor(totalMins / 60);
+    const mins = totalMins % 60;
+    if (hrs === 0) return `${mins}m`;
+    if (mins === 0) return `${hrs}h 00m`;
+    return `${hrs}h ${mins.toString().padStart(2, '0')}m`;
+}
+
 function updatePlaylistBuilderUI() {
     const pb = state.playlistBuilder;
     const { totalDurationMs, count } = getEligibleTracks();
@@ -1556,7 +1594,7 @@ function updatePlaylistBuilderUI() {
     const isTargetReached = totalDurationMs >= targetMs;
 
     const currentMinText = formatMsToHuman(totalDurationMs);
-    const targetMinText = `${pb.targetMinMinutes} min`;
+    const targetMinText = formatMinutesToHoursMin(pb.targetMinMinutes);
 
     const elCurrent = document.getElementById('pb-current-duration');
     const elTargetDisplay = document.getElementById('pb-target-duration-display');
@@ -1644,19 +1682,34 @@ function updatePlaylistBuilderUI() {
 function setPBStep(stepNum) {
     const { totalDurationMs } = getEligibleTracks();
     const targetMs = (state.playlistBuilder.targetMinMinutes || 60) * 60 * 1000;
+    const targetFormatted = formatMinutesToHoursMin(state.playlistBuilder.targetMinMinutes);
 
     if (stepNum > 1 && totalDurationMs < targetMs && stepNum > state.playlistBuilder.step) {
-        showToast(`Atingição necessária: selecione mais músicas para somar pelo menos ${state.playlistBuilder.targetMinMinutes} minutos.`, "warning");
+        showToast(`Atingição necessária: selecione mais músicas para somar pelo menos ${targetFormatted}.`, "warning");
         return;
     }
     state.playlistBuilder.step = stepNum;
     updatePlaylistBuilderUI();
 }
 
+function showPBAlert(message) {
+    const modal = document.getElementById('modal-pb-alert');
+    const msgEl = document.getElementById('pb-alert-message');
+    if (msgEl) msgEl.innerText = message;
+    if (modal) modal.classList.remove('hidden');
+}
+
+function confirmPBAlertRedirect() {
+    const modal = document.getElementById('modal-pb-alert');
+    if (modal) modal.classList.add('hidden');
+    setPBStep(2);
+}
+
 function advancePBStep() {
     const pb = state.playlistBuilder;
     const { totalDurationMs } = getEligibleTracks();
     const targetMs = (pb.targetMinMinutes || 60) * 60 * 1000;
+    const targetFormatted = formatMinutesToHoursMin(pb.targetMinMinutes);
 
     if (pb.step === 1) {
         pb.step = 2;
@@ -1666,13 +1719,14 @@ function advancePBStep() {
             pb.step = 3;
             updatePlaylistBuilderUI();
         } else {
-            showToast(`A duração atual é inferior ao tempo mínimo (${pb.targetMinMinutes} min). Selecione mais gêneros.`, "warning");
+            showToast(`A duração atual é inferior ao tempo mínimo (${targetFormatted}). Selecione mais gêneros.`, "warning");
         }
     } else if (pb.step === 3) {
         if (totalDurationMs >= targetMs) {
             openSavePlaylistModal();
         } else {
-            showToast(`A duração atual é inferior ao tempo mínimo (${pb.targetMinMinutes} min).`, "warning");
+            const currentMin = formatMsToHuman(totalDurationMs);
+            showPBAlert(`A duração acumulada das faixas selecionadas (${currentMin}) está abaixo do tempo mínimo necessário (${targetFormatted}). É necessário incluir mais gêneros.`);
         }
     }
 }
@@ -1681,17 +1735,31 @@ function updatePBConfig() {
     const explicitRadio = document.querySelector('input[name="pb-explicit"]:checked');
     state.playlistBuilder.allowExplicit = explicitRadio ? (explicitRadio.value === 'all') : true;
 
-    const minMinutesInput = document.getElementById('pb-input-min-minutes');
-    let mins = parseInt(minMinutesInput.value, 10);
-    if (isNaN(mins) || mins < 1) mins = 1;
-    state.playlistBuilder.targetMinMinutes = mins;
+    const hoursInput = document.getElementById('pb-input-hours');
+    const minutesInput = document.getElementById('pb-input-minutes');
+
+    let hrs = parseInt(hoursInput?.value || '0', 10);
+    let mins = parseInt(minutesInput?.value || '0', 10);
+
+    if (isNaN(hrs) || hrs < 0) hrs = 0;
+    if (isNaN(mins) || mins < 0) mins = 0;
+
+    let totalMinutes = (hrs * 60) + mins;
+    if (totalMinutes < 1) totalMinutes = 1;
+
+    state.playlistBuilder.targetMinMinutes = totalMinutes;
+
+    const previewEl = document.getElementById('pb-target-formatted-preview');
+    if (previewEl) previewEl.innerText = formatMinutesToHoursMin(totalMinutes);
 
     updatePlaylistBuilderUI();
 }
 
-function setPBTargetMinutes(mins) {
-    const input = document.getElementById('pb-input-min-minutes');
-    if (input) input.value = mins;
+function setPBTargetTime(hrs, mins) {
+    const hoursInput = document.getElementById('pb-input-hours');
+    const minutesInput = document.getElementById('pb-input-minutes');
+    if (hoursInput) hoursInput.value = hrs;
+    if (minutesInput) minutesInput.value = mins;
     updatePBConfig();
 }
 
@@ -1729,7 +1797,7 @@ function renderPBGenres() {
         return;
     }
 
-    const statePriority = { approved: 0, neutral: 1, banned: 2 };
+    const statePriority = { neutral: 0, approved: 1, banned: 2 };
     filteredGenres.sort((a, b) => {
         const stA = statePriority[pb.genreStates[a.name] || 'neutral'];
         const stB = statePriority[pb.genreStates[b.name] || 'neutral'];
@@ -1834,7 +1902,7 @@ function renderPBArtists() {
         return;
     }
 
-    const statePriority = { approved: 0, neutral: 1, banned: 2 };
+    const statePriority = { neutral: 0, approved: 1, banned: 2 };
     filteredArtists.sort((a, b) => {
         const stA = statePriority[pb.artistStates[a.id] || 'neutral'];
         const stB = statePriority[pb.artistStates[b.id] || 'neutral'];
@@ -1886,16 +1954,47 @@ function setPBArtistState(artistId, stateVal) {
         pb.artistStates[artistId] = stateVal;
     }
 
-    const { totalDurationMs } = getEligibleTracks();
-    const targetMs = (pb.targetMinMinutes || 60) * 60 * 1000;
-
-    if (pb.step === 3 && totalDurationMs < targetMs) {
-        pb.step = 2;
-        const artistName = state.artistsMap[artistId] ? state.artistsMap[artistId].name : 'artista';
-        showToast(`Ao banir "${artistName}", a duração total ficou abaixo de ${pb.targetMinMinutes} min. Retornando ao Filtro de Gêneros!`, "warning");
-    }
-
     updatePlaylistBuilderUI();
+
+    // Obter lista de todos os artistas elegíveis na Etapa 3
+    const bannedGenres = new Set(Object.keys(pb.genreStates).filter(g => pb.genreStates[g] === 'banned'));
+    const approvedGenres = new Set(Object.keys(pb.genreStates).filter(g => pb.genreStates[g] === 'approved'));
+
+    const artistTrackCounts = {};
+    state.savedTracks.forEach(item => {
+        if (!item || !item.track) return;
+        if (!pb.allowExplicit && item.track.explicit) return;
+        if (item.track.artists) {
+            item.track.artists.forEach(a => {
+                artistTrackCounts[a.id] = (artistTrackCounts[a.id] || 0) + 1;
+            });
+        }
+    });
+
+    const eligibleArtists = [];
+    Object.keys(artistTrackCounts).forEach(id => {
+        const fullArtist = state.artistsMap[id];
+        if (!fullArtist) return;
+        if (fullArtist.genres && fullArtist.genres.some(g => bannedGenres.has(g))) return;
+        if (approvedGenres.size > 0) {
+            if (!fullArtist.genres || !fullArtist.genres.some(g => approvedGenres.has(g))) return;
+        }
+        eligibleArtists.push(id);
+    });
+
+    const unclassifiedCount = eligibleArtists.filter(id => !pb.artistStates[id] || pb.artistStates[id] === 'neutral').length;
+
+    // Se o usuário já classificou TODOS os artistas (0 neutros restantes):
+    if (eligibleArtists.length > 0 && unclassifiedCount === 0) {
+        const { totalDurationMs } = getEligibleTracks();
+        const targetMs = (pb.targetMinMinutes || 60) * 60 * 1000;
+
+        if (totalDurationMs < targetMs) {
+            const currentMin = formatMsToHuman(totalDurationMs);
+            const targetFormatted = formatMinutesToHoursMin(pb.targetMinMinutes);
+            showPBAlert(`Você classificou todos os artistas, porém a duração acumulada (${currentMin}) ficou abaixo do tempo mínimo necessário (${targetFormatted}). É necessário incluir mais gêneros.`);
+        }
+    }
 }
 
 // ----------------------------------------------------
@@ -1924,7 +2023,7 @@ async function openSavePlaylistModal() {
     }
 
     const inputName = document.getElementById('input-new-playlist-name');
-    if (inputName) inputName.value = `Minha Playlist (${state.playlistBuilder.targetMinMinutes}min)`;
+    if (inputName) inputName.value = `Minha Playlist (${formatMinutesToHoursMin(state.playlistBuilder.targetMinMinutes)})`;
     
     toggleSaveMode('new');
     modal.classList.remove('hidden');
