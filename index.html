@@ -346,7 +346,7 @@
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-zinc-800 mb-6 gap-4">
                         <div>
                             <h2 class="text-xl font-extrabold text-white">Músicas por Gênero</h2>
-                            <p class="text-sm text-zinc-400">Músicas da biblioteca ordenadas do gênero com menor pontuação (frequência) para o maior. Clique na música para abri-la no Spotify (sem reprodução automática).</p>
+                            <p class="text-sm text-zinc-400">Músicas da biblioteca ordenadas do gênero com menor pontuação (frequência) para o maior. Clique na música para abrir o álbum no Spotify.</p>
                         </div>
                         <div class="relative w-full sm:w-72">
                             <input type="text" id="search-music-input" oninput="renderTab2()" placeholder="Buscar por música, artista ou gênero..." class="w-full bg-zinc-950 border border-zinc-800 rounded-full pl-9 pr-4 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#1DB954]">
@@ -1501,7 +1501,7 @@ function closeGenreModal() {
     document.getElementById('modal-genre-tracks').classList.add('hidden');
 }
 
-function openTrackUrl(url) {
+function openAlbumUrl(url) {
     if (url && url !== '#') {
         window.open(url, '_blank');
     }
@@ -1664,7 +1664,7 @@ function renderTab2() {
         const genreScore = item.genreScore !== undefined ? item.genreScore : 0;
 
         return `
-            <div onclick="openTrackUrl('${trackUrl}')" class="flex items-center justify-between p-3.5 rounded-xl bg-zinc-950/60 hover:bg-zinc-800/40 border border-zinc-800/80 transition cursor-pointer group">
+            <div onclick="openAlbumUrl('${albumUrl}')" class="flex items-center justify-between p-3.5 rounded-xl bg-zinc-950/60 hover:bg-zinc-800/40 border border-zinc-800/80 transition cursor-pointer group">
                 <div class="flex items-center space-x-3.5 min-w-0">
                     <span class="text-xs font-bold text-zinc-500 w-6 text-right flex-shrink-0">${index + 1}</span>
                     <img src="${albumCover}" class="h-11 w-11 rounded-lg object-cover border border-zinc-800 flex-shrink-0" alt="Capa">
@@ -1717,11 +1717,10 @@ function renderTab3() {
             : 'https://placehold.co/80x80/27272a/ffffff?text=🎵';
         
         const artistNames = track.artists ? track.artists.map(a => a.name).join(', ') : 'Artista Desconhecido';
-        const rawTrackUrl = (track.external_urls && track.external_urls.spotify) ? track.external_urls.spotify : `https://open.spotify.com/track/${track.id}`;
-        const trackUrl = rawTrackUrl.includes('?') ? `${rawTrackUrl}&autoplay_ok=0` : `${rawTrackUrl}?autoplay_ok=0`;
+        const albumUrl = track.album && track.album.external_urls ? track.album.external_urls.spotify : '#';
 
         return `
-            <div onclick="openTrackUrl('${trackUrl}')" class="flex items-center justify-between p-3.5 rounded-xl bg-zinc-950/40 hover:bg-zinc-900/30 border border-zinc-800/80 transition cursor-pointer group">
+            <div onclick="openAlbumUrl('${albumUrl}')" class="flex items-center justify-between p-3.5 rounded-xl bg-zinc-950/40 hover:bg-zinc-900/30 border border-zinc-800/80 transition cursor-pointer group">
                 <div class="flex items-center space-x-3.5 min-w-0">
                     <img src="${albumCover}" class="h-11 w-11 rounded-lg object-cover border border-zinc-800 flex-shrink-0" alt="Capa">
                     <div class="min-w-0">
