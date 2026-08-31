@@ -205,6 +205,31 @@
         </div>
     </div>
 
+    <!-- Modal de Confirmação Ocultar / Desocultar -->
+    <div id="modal-confirm" class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 hidden backdrop-blur-sm">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-center">
+            <div class="h-12 w-12 rounded-full bg-emerald-500/10 text-[#1DB954] flex items-center justify-center mx-auto border border-[#1DB954]/30">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            
+            <h3 id="confirm-modal-title" class="text-lg font-bold text-white">Confirmar Ação</h3>
+            <p id="confirm-modal-message" class="text-xs text-zinc-300 leading-relaxed">
+                Tem certeza de que deseja realizar esta alteração?
+            </p>
+
+            <div class="flex space-x-3 pt-2">
+                <button onclick="closeConfirmModal()" class="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs rounded-full border border-zinc-700 transition cursor-pointer">
+                    Cancelar
+                </button>
+                <button id="btn-confirm-action-execute" class="flex-1 py-2.5 bg-[#1DB954] hover:bg-[#1ed760] text-black font-extrabold text-xs rounded-full shadow transition transform hover:scale-105 active:scale-95 duration-200 cursor-pointer">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Conteúdo Principal -->
     <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
@@ -262,15 +287,15 @@
                     <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                     </svg>
-                    Aba 2: Gêneros Musicais
-                    <span id="badge-total-genres" class="ml-2 bg-zinc-800 text-zinc-300 text-xs px-2 py-0.5 rounded-full">0</span>
+                    Aba 2: Músicas
+                    <span id="badge-total-tracks" class="ml-2 bg-zinc-800 text-zinc-300 text-xs px-2 py-0.5 rounded-full">0</span>
                 </button>
                 <button onclick="switchTab(3)" id="tab-btn-3" class="tab-btn inline-flex items-center px-6 py-4 border-b-2 font-bold text-sm tracking-wide transition border-transparent text-zinc-400 hover:text-zinc-200">
                     <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
                     </svg>
-                    Aba 3: Gêneros Ocultos
-                    <span id="badge-hidden-genres" class="ml-2 bg-red-950/50 text-red-400 text-xs px-2 py-0.5 rounded-full">0</span>
+                    Aba 3: Músicas Ocultas
+                    <span id="badge-hidden-tracks" class="ml-2 bg-red-950/50 text-red-400 text-xs px-2 py-0.5 rounded-full">0</span>
                 </button>
                 <button onclick="switchTab(4)" id="tab-btn-4" class="tab-btn inline-flex items-center px-6 py-4 border-b-2 font-bold text-sm tracking-wide transition border-transparent text-zinc-400 hover:text-zinc-200">
                     <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -320,27 +345,35 @@
                 <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-zinc-800 mb-6 gap-4">
                         <div>
-                            <h2 class="text-xl font-extrabold text-white">Frequência de Gêneros</h2>
-                            <p class="text-sm text-zinc-400">Análise de gêneros ordenados do menor para o maior. Clique em um gênero para ver a lista de músicas.</p>
+                            <h2 class="text-xl font-extrabold text-white">Músicas por Gênero</h2>
+                            <p class="text-sm text-zinc-400">Músicas da biblioteca ordenadas do gênero com menor pontuação (frequência) para o maior. Clique na música para abrir o álbum no Spotify.</p>
                         </div>
-                        <button id="btn-reset-hidden" class="bg-zinc-800 hover:bg-zinc-700 text-white font-semibold text-xs px-5 py-2.5 rounded-full border border-zinc-700 transition">
-                            RESETAR TODAS OCULTAÇÕES
-                        </button>
+                        <div class="relative w-full sm:w-72">
+                            <input type="text" id="search-music-input" oninput="renderTab2()" placeholder="Buscar por música, artista ou gênero..." class="w-full bg-zinc-950 border border-zinc-800 rounded-full pl-9 pr-4 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#1DB954]">
+                            <svg class="h-4 w-4 text-zinc-500 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
                     </div>
 
-                    <div id="grid-genres" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                    <div id="list-music-tracks" class="space-y-3"></div>
                 </div>
             </div>
 
             <!-- CONTEÚDO DA ABA 3 -->
             <div id="tab-content-3" class="tab-content hidden space-y-6">
                 <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-                    <div class="pb-4 border-b border-zinc-800 mb-6">
-                        <h2 class="text-xl font-extrabold text-white">Gêneros Ocultados</h2>
-                        <p class="text-sm text-zinc-400">Gêneros que você removeu temporariamente da listagem principal.</p>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-zinc-800 mb-6 gap-4">
+                        <div>
+                            <h2 class="text-xl font-extrabold text-white">Músicas Ocultas</h2>
+                            <p class="text-sm text-zinc-400">Músicas que foram ocultadas da aba principal de Músicas.</p>
+                        </div>
+                        <button id="btn-unhide-all" onclick="requestUnhideAllTracks()" class="bg-zinc-800 hover:bg-zinc-700 text-white font-semibold text-xs px-5 py-2.5 rounded-full border border-zinc-700 transition">
+                            DESOCULTAR TODAS
+                        </button>
                     </div>
 
-                    <div id="list-hidden-genres" class="space-y-3 max-w-xl"></div>
+                    <div id="list-hidden-tracks" class="space-y-3"></div>
                 </div>
             </div>
 
@@ -573,6 +606,7 @@ const state = {
     followedNoTracksList: [],
     genreFrequencies: [],
     hiddenGenres: new Set(),
+    hiddenTracks: new Set(),
     playlistBuilder: {
         step: 1,
         allowExplicit: true,
@@ -584,6 +618,15 @@ const state = {
         alertShownForStep: { 2: false, 3: false }
     }
 };
+
+if (localStorage.getItem('hidden_tracks')) {
+    try {
+        const parsed = JSON.parse(localStorage.getItem('hidden_tracks'));
+        state.hiddenTracks = new Set(parsed);
+    } catch(e) {
+        state.hiddenTracks = new Set();
+    }
+}
 
 if (localStorage.getItem('hidden_genres')) {
     try {
@@ -828,7 +871,7 @@ async function spotifyFetch(url, options = {}, forceRefresh = false) {
 
         const headers = {
             'Authorization': `Bearer ${state.accessToken}`,
-            'Accept-Language': 'en',
+            'Accept-Language': 'en-US,en;q=0.9',
             ...(options.headers || {})
         };
 
@@ -1153,18 +1196,59 @@ function processData() {
 
     state.followedNoTracksList.sort((a,b) => a.name.localeCompare(b.name));
 
-    // C) Gêneros das músicas salvas
+    // C) Gêneros das músicas salvas e cálculo de pontuação (frequência)
     const genreCounts = {};
     state.savedTracks.forEach(item => {
         if (item.track && item.track.artists) {
+            const trackGenres = new Set();
             item.track.artists.forEach(simplifiedArtist => {
                 const fullArtist = state.artistsMap[simplifiedArtist.id];
                 if (fullArtist && fullArtist.genres) {
                     fullArtist.genres.forEach(genre => {
-                        genreCounts[genre] = (genreCounts[genre] || 0) + 1;
+                        trackGenres.add(genre);
                     });
                 }
             });
+            trackGenres.forEach(genre => {
+                genreCounts[genre] = (genreCounts[genre] || 0) + 1;
+            });
+        }
+    });
+
+    // D) Atribuir o gênero considerado para cada música (gênero com menor pontuação/frequência na biblioteca)
+    state.savedTracks.forEach(item => {
+        if (!item.track) return;
+        const trackGenres = [];
+        if (item.track.artists) {
+            item.track.artists.forEach(simplifiedArtist => {
+                const fullArtist = state.artistsMap[simplifiedArtist.id];
+                if (fullArtist && fullArtist.genres) {
+                    fullArtist.genres.forEach(g => {
+                        if (!trackGenres.includes(g)) {
+                            trackGenres.push(g);
+                        }
+                    });
+                }
+            });
+        }
+
+        if (trackGenres.length > 0) {
+            let minGenre = trackGenres[0];
+            let minScore = genreCounts[minGenre] || 0;
+
+            for (let i = 1; i < trackGenres.length; i++) {
+                const g = trackGenres[i];
+                const score = genreCounts[g] || 0;
+                if (score < minScore || (score === minScore && g.localeCompare(minGenre) < 0)) {
+                    minGenre = g;
+                    minScore = score;
+                }
+            }
+            item.consideredGenre = minGenre;
+            item.genreScore = minScore;
+        } else {
+            item.consideredGenre = "Unclassified";
+            item.genreScore = 0;
         }
     });
 
@@ -1413,107 +1497,232 @@ function closeGenreModal() {
     document.getElementById('modal-genre-tracks').classList.add('hidden');
 }
 
-function renderTab2() {
-    const gridGenres = document.getElementById('grid-genres');
-    const badgeTotal = document.getElementById('badge-total-genres');
-    
-    const activeGenres = state.genreFrequencies.filter(g => !state.hiddenGenres.has(g.name));
-    badgeTotal.innerText = activeGenres.length;
+function openAlbumUrl(url) {
+    if (url && url !== '#') {
+        window.open(url, '_blank');
+    }
+}
 
-    if (activeGenres.length === 0) {
-        gridGenres.innerHTML = `
-            <div class="col-span-full py-16 flex flex-col items-center justify-center text-center text-zinc-500">
+let pendingConfirmAction = null;
+function openConfirmModal(title, message, onConfirm) {
+    const titleEl = document.getElementById('confirm-modal-title');
+    const msgEl = document.getElementById('confirm-modal-message');
+    const modal = document.getElementById('modal-confirm');
+    
+    if (titleEl) titleEl.innerText = title;
+    if (msgEl) msgEl.innerText = message;
+    pendingConfirmAction = onConfirm;
+    if (modal) modal.classList.remove('hidden');
+}
+
+function closeConfirmModal() {
+    const modal = document.getElementById('modal-confirm');
+    if (modal) modal.classList.add('hidden');
+    pendingConfirmAction = null;
+}
+
+document.getElementById('btn-confirm-action-execute').addEventListener('click', () => {
+    if (typeof pendingConfirmAction === 'function') {
+        pendingConfirmAction();
+    }
+    closeConfirmModal();
+});
+
+function requestHideTrack(trackId, trackName) {
+    openConfirmModal(
+        "Confirmar Ocultação",
+        `Deseja realmente ocultar a música "${trackName}" da listagem principal?`,
+        () => hideTrack(trackId)
+    );
+}
+
+function requestUnhideTrack(trackId, trackName) {
+    openConfirmModal(
+        "Confirmar Desocultação",
+        `Deseja desocultar a música "${trackName}" e devolvê-la para a listagem principal?`,
+        () => unhideTrack(trackId)
+    );
+}
+
+function requestUnhideAllTracks() {
+    if (state.hiddenTracks.size === 0) {
+        showToast("Não há nenhuma música ocultada no momento.", "info");
+        return;
+    }
+    openConfirmModal(
+        "Confirmar Desocultar Todas",
+        `Deseja realmente desocultar TODAS as ${state.hiddenTracks.size} músicas ocultadas?`,
+        () => unhideAllTracks()
+    );
+}
+
+function hideTrack(trackId) {
+    state.hiddenTracks.add(trackId);
+    saveHiddenTracksState();
+    renderTab2();
+    renderTab3();
+    showToast("Música ocultada com sucesso!", "info");
+}
+
+function unhideTrack(trackId) {
+    state.hiddenTracks.delete(trackId);
+    saveHiddenTracksState();
+    renderTab2();
+    renderTab3();
+    showToast("Música desocultada com sucesso!", "success");
+}
+
+function unhideAllTracks() {
+    state.hiddenTracks.clear();
+    saveHiddenTracksState();
+    renderTab2();
+    renderTab3();
+    showToast("Todas as músicas foram desocultadas!", "success");
+}
+
+function saveHiddenTracksState() {
+    localStorage.setItem('hidden_tracks', JSON.stringify(Array.from(state.hiddenTracks)));
+}
+
+function escapeSingleQuote(str) {
+    return str.replace(/'/g, "\\'");
+}
+
+function renderTab2() {
+    const listEl = document.getElementById('list-music-tracks');
+    const badgeTotal = document.getElementById('badge-total-tracks');
+    const searchVal = (document.getElementById('search-music-input')?.value || '').toLowerCase().trim();
+
+    if (!listEl) return;
+
+    let activeTracks = state.savedTracks.filter(item => item.track && !state.hiddenTracks.has(item.track.id));
+    if (badgeTotal) badgeTotal.innerText = activeTracks.length;
+
+    if (searchVal) {
+        activeTracks = activeTracks.filter(item => {
+            const t = item.track;
+            const name = (t.name || '').toLowerCase();
+            const artists = (t.artists ? t.artists.map(a => a.name).join(' ') : '').toLowerCase();
+            const genre = (item.consideredGenre || '').toLowerCase();
+            return name.includes(searchVal) || artists.includes(searchVal) || genre.includes(searchVal);
+        });
+    }
+
+    // Ordenar faixas do gênero de menor pontuação (frequência na biblioteca) para o maior
+    activeTracks.sort((a, b) => {
+        if (a.genreScore !== b.genreScore) {
+            return a.genreScore - b.genreScore;
+        }
+        if (a.consideredGenre !== b.consideredGenre) {
+            return a.consideredGenre.localeCompare(b.consideredGenre);
+        }
+        return (a.track.name || '').localeCompare(b.track.name || '');
+    });
+
+    if (activeTracks.length === 0) {
+        listEl.innerHTML = `
+            <div class="py-16 flex flex-col items-center justify-center text-center text-zinc-500">
                 <svg class="h-12 w-12 text-zinc-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                 </svg>
-                <p class="text-sm font-semibold text-zinc-300">Nenhum gênero para listar</p>
-                <p class="text-xs max-w-sm">Todos os gêneros foram ocultados ou não há dados disponíveis.</p>
+                <p class="text-sm font-semibold text-zinc-300">Nenhuma música encontrada</p>
+                <p class="text-xs max-w-sm">Não há faixas visíveis no momento ou a busca não retornou resultados.</p>
             </div>
         `;
         return;
     }
 
-    const countOccurrences = {};
-    activeGenres.forEach(g => {
-        countOccurrences[g.count] = (countOccurrences[g.count] || 0) + 1;
-    });
-
-    gridGenres.innerHTML = activeGenres.map(item => {
-        const isTied = countOccurrences[item.count] > 1;
-
-        const cardStyle = isTied
-            ? "bg-gradient-to-r from-amber-950/25 to-zinc-950/70 border-amber-500/40 hover:border-amber-400 shadow-md shadow-amber-950/20 ring-1 ring-amber-500/20"
-            : "bg-zinc-950/60 hover:bg-zinc-800/30 border-zinc-800/80 hover:border-zinc-700";
-
-        const countBadgeStyle = isTied
-            ? "bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold"
-            : "bg-zinc-800 text-zinc-400 group-hover:bg-[#1DB954]/10 group-hover:text-[#1DB954]";
-
-        const tiedBadge = isTied
-            ? `<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 ml-2" title="${countOccurrences[item.count]} gêneros empatados com ${item.count} músicas">
-                <svg class="h-2.5 w-2.5 text-amber-400 inline" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.527.82-1.144 2.18-1.577 3.52-.404 1.25-.662 2.45-.722 3.122a6.002 6.002 0 00-3.324 4.545c-.244 1.402.164 2.822 1.09 3.86a6.01 6.01 0 004.512 2.005c2.316 0 4.417-1.31 5.438-3.385a6.005 6.005 0 00.37-3.924c-.31-1.318-.946-2.536-1.748-3.66a21.72 21.72 0 00-1.797-2.778zM10 18a4 4 0 01-3.65-2.378c-.287-.63-.377-1.332-.234-2.02.326-1.558 1.455-2.724 2.842-3.15.197.63.488 1.246.866 1.828.675 1.042 1.583 1.95 2.215 3.09.215.39.317.835.29 1.28A4.004 4.004 0 0110 18z" clip-rule="evenodd" />
-                </svg>
-                <span>Empatado</span>
-               </span>`
+    listEl.innerHTML = activeTracks.map((item, index) => {
+        const track = item.track;
+        const albumCover = (track.album && track.album.images && track.album.images.length > 0)
+            ? track.album.images[track.album.images.length - 1].url
+            : 'https://placehold.co/80x80/27272a/ffffff?text=🎵';
+        
+        const artistNames = track.artists ? track.artists.map(a => a.name).join(', ') : 'Artista Desconhecido';
+        const albumUrl = track.album && track.album.external_urls ? track.album.external_urls.spotify : '#';
+        const explicitTag = track.explicit
+            ? `<span class="px-1.5 py-0.5 text-[9px] font-extrabold bg-red-950/80 text-red-400 border border-red-800/60 rounded">EXPLICIT</span>`
             : '';
+        const genreName = item.consideredGenre || 'Unclassified';
+        const genreScore = item.genreScore !== undefined ? item.genreScore : 0;
 
         return `
-            <div onclick="openGenreModal('${escapeSingleQuote(item.name)}')" class="${cardStyle} border rounded-xl p-4 flex items-center justify-between transition-all group relative overflow-hidden cursor-pointer">
-                ${isTied ? '<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-amber-500"></div>' : ''}
-                <div class="min-w-0 pr-3 ${isTied ? 'pl-2' : ''}">
-                    <div class="flex items-center flex-wrap gap-y-1">
-                        <p class="text-sm font-bold text-white capitalize truncate tracking-wide group-hover:text-[#1DB954] transition">${item.name}</p>
-                        ${tiedBadge}
+            <div onclick="openAlbumUrl('${albumUrl}')" class="flex items-center justify-between p-3.5 rounded-xl bg-zinc-950/60 hover:bg-zinc-800/40 border border-zinc-800/80 transition cursor-pointer group">
+                <div class="flex items-center space-x-3.5 min-w-0">
+                    <span class="text-xs font-bold text-zinc-500 w-6 text-right flex-shrink-0">${index + 1}</span>
+                    <img src="${albumCover}" class="h-11 w-11 rounded-lg object-cover border border-zinc-800 flex-shrink-0" alt="Capa">
+                    <div class="min-w-0">
+                        <div class="flex items-center space-x-2">
+                            <p class="text-sm font-bold text-white group-hover:text-[#1DB954] transition truncate">${track.name}</p>
+                            ${explicitTag}
+                        </div>
+                        <p class="text-xs text-zinc-400 truncate">${artistNames}</p>
+                        <div class="flex items-center space-x-2 mt-1">
+                            <span class="px-2 py-0.5 text-[10px] font-bold bg-[#1DB954]/15 text-[#1DB954] border border-[#1DB954]/30 rounded-full capitalize">
+                                ${genreName} (${genreScore} ${genreScore === 1 ? 'música' : 'músicas'})
+                            </span>
+                        </div>
                     </div>
-                    <span class="inline-flex items-center px-2 py-0.5 mt-1.5 rounded text-xs transition-colors ${countBadgeStyle}">
-                        ${item.count} ${item.count === 1 ? 'música' : 'músicas'}
-                    </span>
                 </div>
-                <button onclick="event.stopPropagation(); hideGenre('${escapeSingleQuote(item.name)}')" class="p-2 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-400 hover:text-red-400 hover:border-red-900/40 hover:bg-red-950/10 transition flex-shrink-0" title="Ocultar gênero">
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
-                    </svg>
-                </button>
+                <div class="flex items-center space-x-3 flex-shrink-0">
+                    <span class="text-xs font-semibold text-zinc-500 hidden sm:inline-block">${formatMsToMinSec(track.duration_ms)}</span>
+                    <button onclick="event.stopPropagation(); requestHideTrack('${track.id}', '${escapeSingleQuote(track.name)}')" class="px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-red-800 hover:bg-red-950/30 text-zinc-400 hover:text-red-400 text-xs font-semibold rounded-lg transition">
+                        Ocultar
+                    </button>
+                </div>
             </div>
         `;
     }).join('');
 }
 
 function renderTab3() {
-    const listHidden = document.getElementById('list-hidden-genres');
-    const badgeHidden = document.getElementById('badge-hidden-genres');
-    
-    const hiddenList = Array.from(state.hiddenGenres).sort();
-    badgeHidden.innerText = hiddenList.length;
+    const listEl = document.getElementById('list-hidden-tracks');
+    const badgeHidden = document.getElementById('badge-hidden-tracks');
+    if (!listEl) return;
 
-    if (hiddenList.length === 0) {
-        listHidden.innerHTML = `
+    const hiddenTracksList = state.savedTracks.filter(item => item.track && state.hiddenTracks.has(item.track.id));
+    if (badgeHidden) badgeHidden.innerText = hiddenTracksList.length;
+
+    if (hiddenTracksList.length === 0) {
+        listEl.innerHTML = `
             <div class="py-12 text-center text-zinc-500">
-                <p class="text-sm font-semibold text-zinc-400">Nenhum gênero ocultado ainda</p>
-                <p class="text-xs mt-1">Gêneros ocultados na Aba 2 serão exibidos aqui.</p>
+                <p class="text-sm font-semibold text-zinc-400">Nenhuma música ocultada ainda</p>
+                <p class="text-xs mt-1">Músicas ocultadas na Aba 2 serão exibidas aqui.</p>
             </div>
         `;
         return;
     }
 
-    listHidden.innerHTML = hiddenList.map(genre => {
+    listEl.innerHTML = hiddenTracksList.map(item => {
+        const track = item.track;
+        const albumCover = (track.album && track.album.images && track.album.images.length > 0)
+            ? track.album.images[track.album.images.length - 1].url
+            : 'https://placehold.co/80x80/27272a/ffffff?text=🎵';
+        
+        const artistNames = track.artists ? track.artists.map(a => a.name).join(', ') : 'Artista Desconhecido';
+        const albumUrl = track.album && track.album.external_urls ? track.album.external_urls.spotify : '#';
+
         return `
-            <div class="flex items-center justify-between p-3 rounded-xl bg-zinc-950/40 hover:bg-zinc-900/30 border border-zinc-800/80 transition">
-                <span class="text-sm text-zinc-300 capitalize font-medium">${genre}</span>
-                <button onclick="restoreGenre('${escapeSingleQuote(genre)}')" class="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-[#1DB954] rounded-lg transition border border-zinc-700">
-                    <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div onclick="openAlbumUrl('${albumUrl}')" class="flex items-center justify-between p-3.5 rounded-xl bg-zinc-950/40 hover:bg-zinc-900/30 border border-zinc-800/80 transition cursor-pointer group">
+                <div class="flex items-center space-x-3.5 min-w-0">
+                    <img src="${albumCover}" class="h-11 w-11 rounded-lg object-cover border border-zinc-800 flex-shrink-0" alt="Capa">
+                    <div class="min-w-0">
+                        <p class="text-sm font-bold text-white group-hover:text-[#1DB954] transition truncate">${track.name}</p>
+                        <p class="text-xs text-zinc-400 truncate">${artistNames}</p>
+                        <span class="inline-block mt-1 px-2 py-0.5 text-[10px] font-bold bg-zinc-800 text-zinc-400 rounded-full capitalize">
+                            ${item.consideredGenre || 'Unclassified'}
+                        </span>
+                    </div>
+                </div>
+                <button onclick="event.stopPropagation(); requestUnhideTrack('${track.id}', '${escapeSingleQuote(track.name)}')" class="inline-flex items-center space-x-1.5 px-3.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-[#1DB954] rounded-lg transition border border-zinc-700 flex-shrink-0">
+                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 15H16.5m0 0v4.5" />
                     </svg>
-                    <span>Desfazer</span>
+                    <span>Desocultar</span>
                 </button>
             </div>
         `;
     }).join('');
-}
-
-function escapeSingleQuote(str) {
-    return str.replace(/'/g, "\\'");
 }
 
 function hideGenre(genreName) {
@@ -2241,6 +2450,15 @@ function setPBArtistState(artistId, stateVal) {
     }
 }
 
+function shuffleArray(array) {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
 // ----------------------------------------------------
 // EXPORTAÇÃO E SALVAMENTO DE PLAYLIST NO SPOTIFY
 // ----------------------------------------------------
@@ -2258,6 +2476,10 @@ async function openSavePlaylistModal() {
             <div class="flex justify-between items-center">
                 <span class="text-zinc-400">Duração Total:</span>
                 <strong class="text-[#1DB954]">${formatMsToHuman(totalDurationMs)}</strong>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-zinc-400">Ordem das Músicas:</span>
+                <strong class="text-[#1DB954]">Aleatória 🎲</strong>
             </div>
             <div class="flex justify-between items-center">
                 <span class="text-zinc-400">Política de Explícitas:</span>
@@ -2323,7 +2545,8 @@ async function executeSavePlaylist() {
     }
 
     const saveMode = document.querySelector('input[name="save-mode"]:checked')?.value || 'new';
-    const trackUris = eligibleTracks.map(item => item.track.uri);
+    // Inserir as músicas de forma aleatória
+    const trackUris = shuffleArray(eligibleTracks.map(item => item.track.uri));
 
     const btnConfirm = document.getElementById('btn-confirm-save-modal');
     if (btnConfirm) {
