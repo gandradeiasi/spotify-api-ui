@@ -1532,6 +1532,18 @@ document.getElementById('btn-confirm-action-execute').addEventListener('click', 
     closeConfirmModal();
 });
 
+function requestGenreMixSearch(genreName) {
+    if (!genreName) return;
+    openConfirmModal(
+        "Pesquisar Mix do Gênero",
+        `Deseja pesquisar pelo mix do gênero "${genreName}" no Spotify?`,
+        () => {
+            const searchUrl = `https://open.spotify.com/search/mix%20${encodeURIComponent(genreName)}`;
+            window.open(searchUrl, '_blank');
+        }
+    );
+}
+
 function requestHideTrack(trackId, trackName) {
     openConfirmModal(
         "Confirmar Ocultação",
@@ -1663,7 +1675,7 @@ function renderTab2() {
                         </div>
                         <p class="text-xs text-zinc-400 truncate">${artistNames}</p>
                         <div class="flex items-center space-x-2 mt-1">
-                            <span class="px-2 py-0.5 text-[10px] font-bold bg-[#1DB954]/15 text-[#1DB954] border border-[#1DB954]/30 rounded-full capitalize">
+                            <span onclick="event.stopPropagation(); requestGenreMixSearch('${escapeSingleQuote(genreName)}')" class="px-2 py-0.5 text-[10px] font-bold bg-[#1DB954]/15 hover:bg-[#1DB954] hover:text-black text-[#1DB954] border border-[#1DB954]/30 rounded-full capitalize transition cursor-pointer" title="Pesquisar mix deste gênero no Spotify">
                                 ${genreName} (${genreScore} ${genreScore === 1 ? 'música' : 'músicas'})
                             </span>
                         </div>
@@ -1715,7 +1727,7 @@ function renderTab3() {
                     <div class="min-w-0">
                         <p class="text-sm font-bold text-white group-hover:text-[#1DB954] transition truncate">${track.name}</p>
                         <p class="text-xs text-zinc-400 truncate">${artistNames}</p>
-                        <span class="inline-block mt-1 px-2 py-0.5 text-[10px] font-bold bg-zinc-800 text-zinc-400 rounded-full capitalize">
+                        <span onclick="event.stopPropagation(); requestGenreMixSearch('${escapeSingleQuote(item.consideredGenre || 'Unclassified')}')" class="inline-block mt-1 px-2 py-0.5 text-[10px] font-bold bg-zinc-800 hover:bg-[#1DB954] hover:text-black text-zinc-400 rounded-full capitalize transition cursor-pointer" title="Pesquisar mix deste gênero no Spotify">
                             ${item.consideredGenre || 'Unclassified'}
                         </span>
                     </div>
