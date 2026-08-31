@@ -1209,9 +1209,13 @@ function processData() {
                     });
                 }
             });
-            trackGenres.forEach(genre => {
-                genreCounts[genre] = (genreCounts[genre] || 0) + 1;
-            });
+            if (trackGenres.size === 0) {
+                genreCounts["Unclassified"] = (genreCounts["Unclassified"] || 0) + 1;
+            } else {
+                trackGenres.forEach(genre => {
+                    genreCounts[genre] = (genreCounts[genre] || 0) + 1;
+                });
+            }
         }
     });
 
@@ -1248,7 +1252,7 @@ function processData() {
             item.genreScore = minScore;
         } else {
             item.consideredGenre = "Unclassified";
-            item.genreScore = 0;
+            item.genreScore = genreCounts["Unclassified"] || 0;
         }
     });
 
