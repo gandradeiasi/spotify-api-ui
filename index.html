@@ -2717,10 +2717,10 @@ modalConfig.addEventListener('click', (e) => {
     }
 });
 
-document.getElementById('btn-login-spotify').addEventListener('click', loginWithSpotify);
-document.getElementById('btn-logout').addEventListener('click', logout);
-document.getElementById('btn-follow-all').addEventListener('click', followAllNotFollowed);
-document.getElementById('btn-reset-hidden').addEventListener('click', resetAllHidden);
+document.getElementById('btn-login-spotify')?.addEventListener('click', loginWithSpotify);
+document.getElementById('btn-logout')?.addEventListener('click', logout);
+document.getElementById('btn-follow-all')?.addEventListener('click', followAllNotFollowed);
+document.getElementById('btn-reset-hidden')?.addEventListener('click', resetAllHidden);
 
 window.onload = function() {
     checkAuth();
