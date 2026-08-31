@@ -1561,7 +1561,9 @@ function requestGenreMixSearch(genreName) {
     );
 }
 
-function requestHideTrack(trackId, trackName) {
+function requestHideTrack(trackId) {
+    const item = state.savedTracks.find(t => t && t.track && t.track.id === trackId);
+    const trackName = item && item.track ? item.track.name : 'esta música';
     openConfirmModal(
         "Confirmar Ocultação",
         `Deseja realmente ocultar a música "${trackName}" da listagem principal?`,
@@ -1569,7 +1571,9 @@ function requestHideTrack(trackId, trackName) {
     );
 }
 
-function requestUnhideTrack(trackId, trackName) {
+function requestUnhideTrack(trackId) {
+    const item = state.savedTracks.find(t => t && t.track && t.track.id === trackId);
+    const trackName = item && item.track ? item.track.name : 'esta música';
     openConfirmModal(
         "Confirmar Desocultação",
         `Deseja desocultar a música "${trackName}" e devolvê-la para a listagem principal?`,
@@ -1672,8 +1676,7 @@ function renderTab2() {
             : 'https://placehold.co/80x80/27272a/ffffff?text=🎵';
         
         const artistNames = track.artists ? track.artists.map(a => a.name).join(', ') : 'Artista Desconhecido';
-        const rawTrackUrl = (track.external_urls && track.external_urls.spotify) ? track.external_urls.spotify : `https://open.spotify.com/track/${track.id}`;
-        const trackUrl = rawTrackUrl.includes('?') ? `${rawTrackUrl}&autoplay_ok=0` : `${rawTrackUrl}?autoplay_ok=0`;
+        const albumUrl = (track.album && track.album.external_urls && track.album.external_urls.spotify) ? track.album.external_urls.spotify : '#';
         const explicitTag = track.explicit
             ? `<span class="px-1.5 py-0.5 text-[9px] font-extrabold bg-red-950/80 text-red-400 border border-red-800/60 rounded">EXPLICIT</span>`
             : '';
@@ -1700,7 +1703,7 @@ function renderTab2() {
                 </div>
                 <div class="flex items-center space-x-3 flex-shrink-0">
                     <span class="text-xs font-semibold text-zinc-500 hidden sm:inline-block">${formatMsToMinSec(track.duration_ms)}</span>
-                    <button onclick="event.stopPropagation(); requestHideTrack('${track.id}', '${escapeSingleQuote(track.name)}')" class="px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-red-800 hover:bg-red-950/30 text-zinc-400 hover:text-red-400 text-xs font-semibold rounded-lg transition">
+                    <button onclick="event.stopPropagation(); requestHideTrack('${track.id}')" class="px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-red-800 hover:bg-red-950/30 text-zinc-400 hover:text-red-400 text-xs font-semibold rounded-lg transition">
                         Ocultar
                     </button>
                 </div>
@@ -1748,7 +1751,7 @@ function renderTab3() {
                         </span>
                     </div>
                 </div>
-                <button onclick="event.stopPropagation(); requestUnhideTrack('${track.id}', '${escapeSingleQuote(track.name)}')" class="inline-flex items-center space-x-1.5 px-3.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-[#1DB954] rounded-lg transition border border-zinc-700 flex-shrink-0">
+                <button onclick="event.stopPropagation(); requestUnhideTrack('${track.id}')" class="inline-flex items-center space-x-1.5 px-3.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-[#1DB954] rounded-lg transition border border-zinc-700 flex-shrink-0">
                     <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 15H16.5m0 0v4.5" />
                     </svg>
