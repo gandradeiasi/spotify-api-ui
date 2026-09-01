@@ -1225,19 +1225,20 @@ function processData() {
 
     state.followedNoTracksList.sort((a,b) => a.name.localeCompare(b.name));
 
-    // C) Gêneros das músicas salvas e cálculo de pontuação (frequência)
+    // C) Gêneros das músicas salvas e cálculo de pontuação (frequência considerando apenas o artista principal)
     const genreCounts = {};
     state.savedTracks.forEach(item => {
-        if (item.track && item.track.artists) {
+        if (item && item.track && item.track.artists && item.track.artists.length > 0) {
+            const primaryArtist = item.track.artists[0];
+            const fullArtist = primaryArtist && primaryArtist.id ? state.artistsMap[primaryArtist.id] : null;
             const trackGenres = new Set();
-            item.track.artists.forEach(simplifiedArtist => {
-                const fullArtist = state.artistsMap[simplifiedArtist.id];
-                if (fullArtist && fullArtist.genres) {
-                    fullArtist.genres.forEach(genre => {
-                        trackGenres.add(genre);
-                    });
-                }
-            });
+
+            if (fullArtist && fullArtist.genres && Array.isArray(fullArtist.genres)) {
+                fullArtist.genres.forEach(genre => {
+                    if (genre) trackGenres.add(genre);
+                });
+            }
+
             if (trackGenres.size === 0) {
                 genreCounts["Unclassified"] = (genreCounts["Unclassified"] || 0) + 1;
             } else {
@@ -1248,21 +1249,20 @@ function processData() {
         }
     });
 
-    // D) Atribuir o gênero considerado para cada música (gênero com menor pontuação/frequência na biblioteca)
+    // D) Atribuir o gênero considerado para cada música (apenas gêneros do artista principal)
     state.savedTracks.forEach(item => {
-        if (!item.track) return;
+        if (!item || !item.track) return;
         const trackGenres = [];
-        if (item.track.artists) {
-            item.track.artists.forEach(simplifiedArtist => {
-                const fullArtist = state.artistsMap[simplifiedArtist.id];
-                if (fullArtist && fullArtist.genres) {
-                    fullArtist.genres.forEach(g => {
-                        if (!trackGenres.includes(g)) {
-                            trackGenres.push(g);
-                        }
-                    });
-                }
-            });
+        if (item.track.artists && item.track.artists.length > 0) {
+            const primaryArtist = item.track.artists[0];
+            const fullArtist = primaryArtist && primaryArtist.id ? state.artistsMap[primaryArtist.id] : null;
+            if (fullArtist && fullArtist.genres && Array.isArray(fullArtist.genres)) {
+                fullArtist.genres.forEach(g => {
+                    if (g && !trackGenres.includes(g)) {
+                        trackGenres.push(g);
+                    }
+                });
+            }
         }
 
         if (trackGenres.length > 0) {
