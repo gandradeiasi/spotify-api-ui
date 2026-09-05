@@ -1431,20 +1431,23 @@
 
             state.followedNoTracksList.sort((a, b) => a.name.localeCompare(b.name));
 
-            // C) Gêneros das músicas salvas (mapeamento para TODOS os gêneros dos artistas)
+            // C) Gêneros das músicas salvas (considerando APENAS o artista principal - o primeiro da lista)
             const genreCounts = {};
+            const tracksByGenreMap = {};
+
             state.savedTracks.forEach(item => {
                 if (!item || !item.track) return;
                 const trackGenres = new Set();
-                if (item.track.artists && Array.isArray(item.track.artists)) {
-                    item.track.artists.forEach(artist => {
-                        const fullArtist = artist && artist.id ? state.artistsMap[artist.id] : null;
-                        if (fullArtist && fullArtist.genres && Array.isArray(fullArtist.genres)) {
-                            fullArtist.genres.forEach(genre => {
-                                if (genre) trackGenres.add(genre);
-                            });
-                        }
-                    });
+                
+                // Considerar APENAS o primeiro artista (artista principal)
+                if (item.track.artists && item.track.artists.length > 0) {
+                    const primaryArtist = item.track.artists[0];
+                    const fullArtist = primaryArtist && primaryArtist.id ? state.artistsMap[primaryArtist.id] : null;
+                    if (fullArtist && fullArtist.genres && Array.isArray(fullArtist.genres)) {
+                        fullArtist.genres.forEach(genre => {
+                            if (genre) trackGenres.add(genre);
+                        });
+                    }
                 }
 
                 if (trackGenres.size === 0) {
@@ -1455,8 +1458,12 @@
 
                 item.genres.forEach(g => {
                     genreCounts[g] = (genreCounts[g] || 0) + 1;
+                    if (!tracksByGenreMap[g]) tracksByGenreMap[g] = [];
+                    tracksByGenreMap[g].push(item);
                 });
             });
+
+            state.tracksByGenreMap = tracksByGenreMap;
 
             // Migração legada se houver
             if (state.legacyHiddenTracks && state.legacyHiddenTracks.size > 0 && state.hiddenTrackGenres.size === 0) {
@@ -1646,13 +1653,7 @@
 
             titleEl.innerText = genreName;
 
-            const matchingTracks = state.savedTracks.filter(item => {
-                if (!item.track || !item.track.artists) return false;
-                return item.track.artists.some(artist => {
-                    const fullArtist = state.artistsMap[artist.id];
-                    return fullArtist && fullArtist.genres && fullArtist.genres.includes(genreName);
-                });
-            });
+            const matchingTracks = (state.tracksByGenreMap && state.tracksByGenreMap[genreName]) || [];
 
             const totalMs = matchingTracks.reduce((acc, item) => acc + (item.track ? (item.track.duration_ms || 0) : 0), 0);
             subtitleEl.innerText = `${matchingTracks.length} ${matchingTracks.length === 1 ? 'música' : 'músicas'} • Duração total: ${formatMsToHuman(totalMs)}`;
@@ -1737,10 +1738,11 @@
         }
 
         document.getElementById('btn-confirm-action-execute').addEventListener('click', () => {
-            if (typeof pendingConfirmAction === 'function') {
-                pendingConfirmAction();
-            }
+            const action = pendingConfirmAction;
             closeConfirmModal();
+            if (typeof action === 'function') {
+                setTimeout(action, 10);
+            }
         });
 
         function requestGenreMixSearch(genreName) {
@@ -1932,8 +1934,8 @@
                 const genreName = genreObj.name;
                 const totalGenreCount = genreObj.count; // Total intacto no cabeçalho!
 
-                // Buscar músicas que pertencem a este gênero
-                const tracksInGenre = state.savedTracks.filter(item => item.track && item.genres && item.genres.includes(genreName));
+                // Buscar músicas que pertencem a este gênero (usando o mapa pré-indexado O(1))
+                const tracksInGenre = (state.tracksByGenreMap && state.tracksByGenreMap[genreName]) || [];
                 
                 // Filtrar faixas que não foram ocultadas especificamente neste gênero
                 let visibleTracks = tracksInGenre.filter(item => !state.hiddenTrackGenres.has(`${item.track.id}:::${genreName}`));
