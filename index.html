@@ -1938,6 +1938,11 @@
                 // Filtrar faixas que não foram ocultadas especificamente neste gênero
                 let visibleTracks = tracksInGenre.filter(item => !state.hiddenTrackGenres.has(`${item.track.id}:::${genreName}`));
 
+                // Se todas as músicas do gênero estiverem ocultas, não exibe o gênero na lista
+                if (visibleTracks.length === 0) {
+                    return '';
+                }
+
                 if (searchVal) {
                     const isGenreMatch = genreName.toLowerCase().includes(searchVal);
                     visibleTracks = visibleTracks.filter(item => {
@@ -1962,9 +1967,7 @@
                     return (a.track.name || '').localeCompare(b.track.name || '');
                 });
 
-                const trackListHtml = visibleTracks.length === 0
-                    ? `<div class="py-3 text-center text-xs text-zinc-500 italic bg-zinc-950/30 rounded-xl">Todas as músicas deste gênero foram ocultadas ou não correspondem à busca.</div>`
-                    : visibleTracks.map(item => {
+                const trackListHtml = visibleTracks.map(item => {
                         const track = item.track;
                         const trackKey = `${track.id}:::${genreName}`;
                         const isStarred = state.starredTrackGenres.has(trackKey);
